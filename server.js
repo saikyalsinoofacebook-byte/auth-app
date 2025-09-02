@@ -4,13 +4,20 @@ import cors from "cors";
 import { Pool } from "pg";
 
 dotenv.config();
+
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Database connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
+});
+
+// Root route
+app.get("/", (req, res) => {
+  res.send("🚀 Server is running successfully!");
 });
 
 // Register API
@@ -31,6 +38,7 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   const result = await pool.query("SELECT * FROM users WHERE email=$1", [email]);
+
   if (result.rows.length && result.rows[0].password === password) {
     res.json({ message: "Login success" });
   } else {
@@ -38,7 +46,8 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT || 5000, () =>
-  console.log("✅ Server running...")
-);
-
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+});
