@@ -12,3 +12,4 @@ yarn-error.log*
 # OS junk
 .DS_Store
 Thumbs.db
+"node_modules/" 
