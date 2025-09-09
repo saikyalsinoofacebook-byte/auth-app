@@ -39,7 +39,7 @@ async function loadBalance() {
   }
 
   try {
-    const res = await fetch(`http://localhost:5000/api/wallet/${USER.id}`);
+    const res = await fetch(`https://arthur-game-shop.onrender.com/api/wallet/${USER.id}`);
     const data = await res.json();
     if (res.ok) {
       document.getElementById("balance").innerText = data.balance.toLocaleString() + " ကျပ်";
@@ -74,7 +74,7 @@ async function redeem() {
   }
 
   try {
-    const res = await fetch("http://localhost:5000/api/redeem", {
+    const res = await fetch("https://arthur-game-shop.onrender.com/api/redeem", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: USER.id, code })
@@ -103,7 +103,7 @@ async function clearData() {
   }
 
   try {
-    await fetch(`http://localhost:5000/api/clear/${USER.id}`, { method: "DELETE" });
+    await fetch(`https://arthur-game-shop.onrender.com/api/clear/${USER.id}`, { method: "DELETE" });
     alert("All transactions cleared!");
     loadBalance();
   } catch (err) {

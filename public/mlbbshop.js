@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // ===== API Base URL =====
+  const API_BASE = "https://arthur-game-shop.onrender.com";
+  
   // ===== Wallet Balance Load =====
   const user = JSON.parse(localStorage.getItem("user"));  
   if (user && user.id) {
@@ -10,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
       window.loadingAnimation.showInlineLoading(walletBalance, "Loading...");
     }
     
-    fetch(`/api/wallet/${user.id}`)
+    fetch(`${API_BASE}/api/wallet/${user.id}`)
       .then(res => res.json())
       .then(data => {
         const balance = data.balance || 0;
@@ -189,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
       requestBody = JSON.stringify(orderData);
     }
 
-    fetch("/api/orders", {
+    fetch(`${API_BASE}/api/orders`, {
       method: "POST",
       headers: headers,
       body: requestBody,

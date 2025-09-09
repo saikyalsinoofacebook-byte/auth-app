@@ -19,7 +19,14 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
-app.use(cors());
+// CORS configuration for production
+const corsOptions = {
+  origin: process.env.NODE_ENV === "production" 
+    ? ["https://arthur-game-shop.onrender.com", "https://arthur-game-shop.onrender.com/"]
+    : true, // Allow all origins in development
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -914,4 +921,9 @@ app.use(router);
 
 
 /* ----------------- START ----------------- */
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  const serverUrl = process.env.NODE_ENV === "production" 
+    ? "https://arthur-game-shop.onrender.com"
+    : `http://localhost:${PORT}`;
+  console.log(`Server running on ${serverUrl}`);
+});

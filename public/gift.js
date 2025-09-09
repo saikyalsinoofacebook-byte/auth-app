@@ -1,4 +1,4 @@
-const API = window.location.hostname === "localhost" ? "http://localhost:5000" : window.location.origin;
+const API = "https://arthur-game-shop.onrender.com";
 
 // DOM elements
 let wheelCanvas, spinBtn, freeState, freeTimer, tokenCount, buyBtn, historyEl;

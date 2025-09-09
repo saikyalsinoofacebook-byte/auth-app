@@ -1,10 +1,7 @@
 // ======================
 // Backend API base
 // ======================
-const API_BASE =
-  window.location.hostname === "localhost"
-    ? "http://localhost:5000"
-    : window.location.origin;
+const API_BASE = "https://arthur-game-shop.onrender.com";
 
 // ✅ LocalStorage ထဲက user info ယူ
 const USER = JSON.parse(localStorage.getItem("user"));

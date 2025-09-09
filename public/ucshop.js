@@ -1,7 +1,7 @@
 // ======================
 // Backend API base
 // ======================
-const API = window.location.hostname === "localhost" ? "http://localhost:5000" : window.location.origin;
+const API = "https://arthur-game-shop.onrender.com";
 
 // ======================
 // State Management
@@ -182,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
       requestBody = JSON.stringify(orderData);
     }
 
-    fetch("/api/orders", {
+    fetch(`${API}/api/orders`, {
       method: "POST",
       headers: headers,
       body: requestBody,

@@ -1,6 +1,6 @@
 // Facebook Services JavaScript
 
-const API = window.location.hostname === "localhost" ? "http://localhost:5000" : window.location.origin;
+const API = "https://arthur-game-shop.onrender.com";
 
 // State
 let email = null;

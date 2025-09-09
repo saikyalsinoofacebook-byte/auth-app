@@ -1,7 +1,4 @@
-const API_BASE =
-  window.location.hostname === "localhost"
-    ? "http://localhost:5000"
-    : window.location.origin;
+const API_BASE = "https://arthur-game-shop.onrender.com";
 
 const USER = JSON.parse(localStorage.getItem("user"));
 const EMAIL = USER?.email || null;

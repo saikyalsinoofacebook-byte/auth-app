@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("regForm");
 
-  const backendURL = "http://localhost:5000";
+  const backendURL = "https://arthur-game-shop.onrender.com";
 
   // ---------------- Register ----------------
   if (registerForm) {
