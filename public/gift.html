@@ -7,6 +7,7 @@
   <title>Lucky Gift Wheel</title>
   <link rel="stylesheet" href="gift.css" />
   <link rel="stylesheet" href="bottom-nav.css" />
+  <link rel="stylesheet" href="loading-animation.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body>
@@ -29,8 +30,8 @@
     <section class="wheel-card" aria-label="Lucky wheel">
       <div class="wheel">
         <div class="pointer" aria-hidden="true"></div>
-        <canvas id="wheelCanvas" width="520" height="520" aria-label="gift wheel"></canvas>
-        <button id="spinBtn" class="spin-btn" aria-label="Spin the wheel">GO</button>
+        <canvas id="wheelCanvas" width="520" height="520" aria-label="gift wheel" style="display: block; margin: 0 auto;"></canvas>
+        <button id="spinBtn" class="spin-btn" aria-label="Spin the wheel">အခုလှည့်နိုင်ပြီနိုပ်ပီ</button>
       </div>
 
       <aside class="panel" aria-label="Controls">
@@ -88,6 +89,7 @@
   </div>
 
 
+  <script src="loading-animation.js"></script>
   <script src="gift.js"></script>
   <!-- Bottom Navigation JS -->
   <script src="bottom-nav.js"></script>

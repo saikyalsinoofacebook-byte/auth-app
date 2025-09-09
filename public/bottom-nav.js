@@ -101,6 +101,9 @@ function addNavClickHandlers() {
   
   navItems.forEach(item => {
     item.addEventListener('click', function(e) {
+      // Show page transition loading
+      window.showPageTransition();
+      
       // Add loading state
       this.style.opacity = '0.6';
       

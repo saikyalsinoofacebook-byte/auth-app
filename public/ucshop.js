@@ -148,6 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
       method: selectedMethod,
       email: user?.email || "",
       gameId: gameId,
+      gameName: "UC",
       payerName: document.getElementById("payerName")?.value || "",
       payerPhone: document.getElementById("payerPhone")?.value || "",
       screenshot: document.getElementById("screenshot")?.files[0]?.name || ""
@@ -170,6 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
       formData.append("price", orderData.price);
       formData.append("method", orderData.method);
       formData.append("gameId", orderData.gameId);
+      formData.append("gameName", orderData.gameName);
       formData.append("payerName", orderData.payerName);
       formData.append("payerPhone", orderData.payerPhone);
       formData.append("screenshot", document.getElementById("screenshot").files[0]);
@@ -245,7 +247,7 @@ async function loadWalletBalance() {
   if (!user?.email) return;
   
   try {
-    const res = await fetch(`${API}/api/wallet/${user.email}`);
+    const res = await fetch(`${API}/api/wallet/${user.id}`);
     if (!res.ok) throw new Error("Failed to fetch wallet");
     
     const wallet = await res.json();

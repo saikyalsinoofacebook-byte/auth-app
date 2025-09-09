@@ -24,7 +24,7 @@ if (!USER) {
   alert("ကျေးဇူးပြု၍ Login ဝင်ပါ");
   window.location.href = "login.html";
 } else {
-  document.getElementById("username").innerText = USER.username || "User";
+  document.getElementById("username").innerText = USER.name || USER.username || "User";
   document.getElementById("useremail").innerText = USER.email || "";
 }
 
@@ -32,8 +32,14 @@ if (!USER) {
 
 // Balance ကို API ကနေ ယူမယ်
 async function loadBalance() {
+  if (!USER || !USER.id) {
+    console.error("No user ID found");
+    document.getElementById("balance").innerText = "0.00 ကျပ်";
+    return;
+  }
+
   try {
-    const res = await fetch(`http://localhost:5000/api/wallet/${USER.email}`);
+    const res = await fetch(`http://localhost:5000/api/wallet/${USER.id}`);
     const data = await res.json();
     if (res.ok) {
       document.getElementById("balance").innerText = data.balance.toLocaleString() + " ကျပ်";
@@ -62,11 +68,16 @@ async function redeem() {
   const code = document.getElementById("redeemCode").value.trim();
   if (!code) return alert("Please enter code");
 
+  if (!USER || !USER.id) {
+    alert("User not found");
+    return;
+  }
+
   try {
     const res = await fetch("http://localhost:5000/api/redeem", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: USER.email, code })
+      body: JSON.stringify({ user_id: USER.id, code })
     });
     const data = await res.json();
     if (res.ok) {
@@ -86,8 +97,13 @@ function openClear() { document.getElementById("clearModal").style.display = "fl
 function closeClear() { document.getElementById("clearModal").style.display = "none"; }
 
 async function clearData() {
+  if (!USER || !USER.id) {
+    alert("User not found");
+    return;
+  }
+
   try {
-    await fetch(`http://localhost:5000/api/clear/${USER.email}`, { method: "DELETE" });
+    await fetch(`http://localhost:5000/api/clear/${USER.id}`, { method: "DELETE" });
     alert("All transactions cleared!");
     loadBalance();
   } catch (err) {
@@ -102,6 +118,7 @@ function closeLogout() { document.getElementById("logoutModal").style.display = 
 
 function logout() {
   localStorage.removeItem("user");
+  localStorage.removeItem("email");
   window.location.href = "index.html";
 }
 
@@ -144,6 +161,8 @@ function closeLogout() {
   document.getElementById("logoutModal").style.display = "none";
 }
 function logout() {
+  localStorage.removeItem("user");
+  localStorage.removeItem("email");
   window.location.href = "index.html";
 }
 

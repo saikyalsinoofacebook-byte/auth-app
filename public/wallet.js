@@ -8,27 +8,38 @@ const API_BASE =
 
 // ✅ LocalStorage ထဲက user info ယူ
 const USER = JSON.parse(localStorage.getItem("user"));
+const USER_ID = USER?.id || null;
 const EMAIL = USER?.email || null;
 
 // ✅ Debug user info
 console.log("👤 User from localStorage:", USER);
+console.log("🆔 User ID extracted:", USER_ID);
 console.log("📧 Email extracted:", EMAIL);
 
 // ======================
 // Wallet Load
 // ======================
 async function loadWallet() {
-  if (!EMAIL) {
-    console.warn("⚠️ No user email found in localStorage!");
+  if (!USER_ID) {
+    console.warn("⚠️ No user ID found in localStorage!");
     alert("⚠️ Please login first to view wallet");
     return;
   }
 
   try {
-    console.log(`🔄 Loading wallet for: ${EMAIL}`);
-    console.log(`🌐 API URL: ${API_BASE}/api/wallet/${EMAIL}`);
+    console.log(`🔄 Loading wallet for user ID: ${USER_ID}`);
+    console.log(`🌐 API URL: ${API_BASE}/api/wallet/${USER_ID}`);
     
-    const res = await fetch(`${API_BASE}/api/wallet/${EMAIL}`);
+    // Show loading for wallet balance
+    const totalBalanceElement = document.getElementById("total-balance");
+    const availableElement = document.getElementById("available");
+    const onholdElement = document.getElementById("onhold");
+    
+    if (totalBalanceElement) {
+      window.loadingAnimation.showInlineLoading(totalBalanceElement, "Loading...");
+    }
+    
+    const res = await fetch(`${API_BASE}/api/wallet/${USER_ID}`);
     console.log(`📡 Response status: ${res.status}`);
     
     if (!res.ok) {
@@ -40,12 +51,15 @@ async function loadWallet() {
     const wallet = await res.json();
     console.log("✅ Wallet data received:", wallet);
 
-    document.getElementById("total-balance").textContent =
-      Number(wallet.balance ?? 0).toFixed(2);
-    document.getElementById("available").textContent =
-      Number(wallet.balance ?? 0).toFixed(2);
-    document.getElementById("onhold").textContent =
-      Number(wallet.onhold ?? 0).toFixed(2);
+    if (totalBalanceElement) {
+      totalBalanceElement.textContent = Number(wallet.balance ?? 0).toFixed(2);
+    }
+    if (availableElement) {
+      availableElement.textContent = Number(wallet.available_balance ?? 0).toFixed(2);
+    }
+    if (onholdElement) {
+      onholdElement.textContent = Number(wallet.on_hold_balance ?? 0).toFixed(2);
+    }
   } catch (err) {
     console.error("❌ Wallet load error:", err);
     alert("❌ Wallet load error: " + err.message);
@@ -56,16 +70,16 @@ async function loadWallet() {
 // Transactions Load
 // ======================
 async function loadTransactions() {
-  if (!EMAIL) {
-    console.warn("⚠️ No user email found for transactions!");
+  if (!USER_ID) {
+    console.warn("⚠️ No user ID found for transactions!");
     return;
   }
 
   try {
-    console.log(`🔄 Loading transactions for: ${EMAIL}`);
-    console.log(`🌐 API URL: ${API_BASE}/api/transactions/${EMAIL}`);
+    console.log(`🔄 Loading transactions for user ID: ${USER_ID}`);
+    console.log(`🌐 API URL: ${API_BASE}/api/transactions/${USER_ID}`);
     
-    const res = await fetch(`${API_BASE}/api/transactions/${EMAIL}`);
+    const res = await fetch(`${API_BASE}/api/transactions/${USER_ID}`);
     console.log(`📡 Response status: ${res.status}`);
     
     if (!res.ok) {
@@ -74,7 +88,8 @@ async function loadTransactions() {
       throw new Error(`Server error: ${res.status}`);
     }
 
-    const txns = await res.json();
+    const data = await res.json();
+    const txns = Array.isArray(data) ? data : (data.transactions || []);
     console.log("✅ Transactions data received:", txns);
     
     const txnList = document.getElementById("transactions-list");
@@ -85,7 +100,14 @@ async function loadTransactions() {
       return;
     }
 
-    txns.forEach((txn) => {
+    // Sort transactions by created_at DESC to ensure most recent first
+    const sortedTxns = txns.sort((a, b) => {
+      const dateA = new Date(a.created_at || 0);
+      const dateB = new Date(b.created_at || 0);
+      return dateB - dateA; // Most recent first
+    });
+
+    sortedTxns.forEach((txn, index) => {
       const amountClass = txn.amount > 0 ? "positive" : "negative";
 
       // ✅ Status class mapping
@@ -106,6 +128,37 @@ async function loadTransactions() {
         }
       }
 
+      // Format date for better display
+      let formattedDate = "";
+      if (txn.created_at) {
+        const date = new Date(txn.created_at);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffHours < 1) {
+          const diffMinutes = Math.floor(diffMs / (1000 * 60));
+          formattedDate = `${diffMinutes}m ago`;
+        } else if (diffHours < 24) {
+          formattedDate = `${diffHours}h ago`;
+        } else if (diffDays < 7) {
+          formattedDate = `${diffDays}d ago`;
+        } else {
+          formattedDate = date.toLocaleDateString();
+        }
+      }
+
+      // Handle special prizes display
+      let amountDisplay = "";
+      if (txn.type === "gift" && txn.amount === 0 && txn.remark) {
+        // Special prizes (Diamond 10,000, UC 1000, iPhone 16, etc.)
+        amountDisplay = txn.remark;
+      } else {
+        // Regular transactions with amounts
+        amountDisplay = `${txn.amount > 0 ? "+" : ""}${Number(txn.amount).toFixed(2)}`;
+      }
+
       const card = document.createElement("div");
       card.className = "txn-card";
       card.innerHTML = `
@@ -113,16 +166,12 @@ async function loadTransactions() {
           <i class="bi bi-wallet2 icon"></i>
           <div>
             <strong>${txn.type || "Transaction"}</strong><br>
-            <small>${
-              txn.created_at
-                ? new Date(txn.created_at).toLocaleString()
-                : ""
-            }</small><br>
+            <small>${formattedDate}</small><br>
             <span class="${statusClass}">${statusText}</span>
           </div>
         </div>
         <div class="txn-right ${amountClass}">
-          ${txn.amount > 0 ? "+" : ""}${Number(txn.amount).toFixed(2)}
+          ${amountDisplay}
         </div>
       `;
       txnList.appendChild(card);
@@ -137,13 +186,13 @@ async function loadTransactions() {
 // Deposit API Call
 // ======================
 async function deposit(amount) {
-  if (!EMAIL) return;
+  if (!USER_ID) return;
 
   try {
     const res = await fetch(`${API_BASE}/api/deposit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: EMAIL, amount }),
+      body: JSON.stringify({ user_id: USER_ID, amount }),
     });
 
     const data = await res.json();
@@ -154,9 +203,9 @@ async function deposit(amount) {
       document.getElementById("total-balance").textContent =
         Number(data.wallet.balance).toFixed(2);
       document.getElementById("available").textContent =
-        Number(data.wallet.balance).toFixed(2);
+        Number(data.wallet.available_balance).toFixed(2);
       document.getElementById("onhold").textContent =
-        Number(data.wallet.onhold).toFixed(2);
+        Number(data.wallet.on_hold_balance).toFixed(2);
 
       // ✅ Refresh transactions
       loadTransactions();
@@ -173,13 +222,13 @@ async function deposit(amount) {
 // Withdraw API Call
 // ======================
 async function withdraw(amount) {
-  if (!EMAIL) return;
+  if (!USER_ID) return;
 
   try {
     const res = await fetch(`${API_BASE}/api/withdraw`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: EMAIL, amount }),
+      body: JSON.stringify({ user_id: USER_ID, amount }),
     });
 
     const data = await res.json();
@@ -190,9 +239,9 @@ async function withdraw(amount) {
       document.getElementById("total-balance").textContent =
         Number(data.wallet.balance).toFixed(2);
       document.getElementById("available").textContent =
-        Number(data.wallet.balance).toFixed(2);
+        Number(data.wallet.available_balance).toFixed(2);
       document.getElementById("onhold").textContent =
-        Number(data.wallet.onhold).toFixed(2);
+        Number(data.wallet.on_hold_balance).toFixed(2);
 
       // ✅ Refresh transactions
       loadTransactions();
@@ -210,7 +259,7 @@ async function withdraw(amount) {
 // ======================
 document.addEventListener("DOMContentLoaded", () => {
   // ✅ Check if user is logged in
-  if (!EMAIL) {
+  if (!USER_ID) {
     console.warn("⚠️ No user found, redirecting to login");
     alert("⚠️ Please login first to access wallet");
     window.location.href = "login.html";

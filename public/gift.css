@@ -12,18 +12,20 @@
 }
 
 *{box-sizing:border-box}
-html,body{height:100%}
+html,body{min-height:100%}
 body{
   margin:0;
   color:var(--ink);
   font: 16px/1.5 "Poppins", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   background: radial-gradient(1200px 600px at 50% -200px,#1e40af 0%, #3b82f6 60%, #1e3a8a 100%);
+  overflow-x: hidden;
 }
 
 .banner-art{display:block;width:100%;height:auto}
 .wrap{
-  max-width:1200px; margin:0 auto; padding:20px;
+  max-width:1200px; margin:0 auto; padding:20px 20px 60px 20px;
   display:grid; gap:20px; grid-template-columns:1fr 300px;
+  min-height: calc(100vh - 40px);
 }
 
 .wheel-card{
@@ -50,11 +52,18 @@ body{
 
 .spin-btn{
   position:absolute; inset:0; margin:auto;
-  width:140px; height:140px; border-radius:50%;
+  width:160px; height:160px; border-radius:50%;
   border:0; color:#fff; font-weight:800; letter-spacing:.5px;
   background: radial-gradient(circle at 50% 38%, #60a5fa, #3b82f6 70%);
   box-shadow: 0 18px 30px rgba(59,130,246,.35), inset 0 6px 18px rgba(255,255,255,.5);
   cursor:pointer; transition: transform .08s ease;
+  font-size: 14px;
+  line-height: 1.2;
+  text-align: center;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .spin-btn:active{ transform: scale(.98); }
@@ -72,6 +81,27 @@ body{
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
+}
+
+.user-status{
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.user-status.special{
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #1a1a2e;
+  border: 2px solid #ffd700;
+}
+
+.user-status.normal{
+  background: linear-gradient(135deg, #e5e7eb, #f3f4f6);
+  color: #6b7280;
+  border: 2px solid #d1d5db;
 }
 
 .muted{

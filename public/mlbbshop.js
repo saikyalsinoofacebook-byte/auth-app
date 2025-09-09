@@ -1,15 +1,32 @@
 document.addEventListener("DOMContentLoaded", () => {
   // ===== Wallet Balance Load =====
   const user = JSON.parse(localStorage.getItem("user"));  
-  if (user && user.email) {
-    fetch(`/api/wallet/${user.email}`)
+  if (user && user.id) {
+    // Show loading for wallet balance
+    const walletBalance = document.getElementById("wallet-balance");
+    const modalBalance = document.getElementById("modal-balance");
+    
+    if (walletBalance) {
+      window.loadingAnimation.showInlineLoading(walletBalance, "Loading...");
+    }
+    
+    fetch(`/api/wallet/${user.id}`)
       .then(res => res.json())
       .then(data => {
         const balance = data.balance || 0;
-        document.getElementById("wallet-balance").textContent = balance.toLocaleString();
-        document.getElementById("modal-balance").textContent = balance.toLocaleString();
+        if (walletBalance) {
+          walletBalance.textContent = balance.toLocaleString();
+        }
+        if (modalBalance) {
+          modalBalance.textContent = balance.toLocaleString();
+        }
       })
-      .catch(err => console.error("Wallet fetch error:", err));
+      .catch(err => {
+        console.error("Wallet fetch error:", err);
+        if (walletBalance) {
+          walletBalance.textContent = "Error";
+        }
+      });
   }
 
   // ===== Modal Logic =====
@@ -148,8 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ Order Data:", orderData);
 
     // Show loading state
-    confirmBtn.textContent = "Processing...";
-    confirmBtn.disabled = true;
+    window.loadingAnimation.setButtonLoading(confirmBtn, "Processing...");
 
     // Create FormData for file upload if needed
     let requestBody;
@@ -194,8 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .finally(() => {
         // Reset button state
-        confirmBtn.textContent = "Confirm";
-        confirmBtn.disabled = false;
+        window.loadingAnimation.removeButtonLoading(confirmBtn);
       });
   });
 

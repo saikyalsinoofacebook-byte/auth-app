@@ -21,9 +21,9 @@ async function loadUserData() {
   try {
     const userData = localStorage.getItem('user');
     if (userData) {
-      const user = JSON.parse(userData);
+      user = JSON.parse(userData);
       email = user.email;
-      console.log('User email loaded:', email);
+      console.log('User data loaded:', user);
     } else {
       console.log('No user data found');
       // Redirect to login if no user data
@@ -40,7 +40,7 @@ async function loadWalletBalance() {
   
   try {
     console.log('Loading wallet balance for:', email);
-    const response = await fetch(`${API}/api/wallet/${email}`);
+    const response = await fetch(`${API}/api/wallet/${user.id}`);
     
     if (!response.ok) {
       throw new Error(`Server error: ${response.status}`);

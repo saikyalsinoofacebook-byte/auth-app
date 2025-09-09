@@ -17,47 +17,63 @@ let giftState = {
 
 // Wheel configuration
 let ctx;
+// Show big prizes on wheel for all users (but normal users can't actually win them)
 const labels = [
-  "Good Luck",
-  "Ks-10",
-  "Ks-30",
-  "Ks-100",
-  "Ks-500",
-  "Ks-1000",
-  "Ks-3000",
-  "Ks-10000",
-  "Diamond 10,000",
-  "UC 1000",
-  "iPhone 16"
+  "iPhone 16",        // Big prize - only special users can win
+  "Diamond 10,000",   // Big prize - only special users can win  
+  "Ks-10000",         // Big prize - only special users can win
+  "Ks-5000",          // Big prize - only special users can win
+  "Ks-3000",          // Big prize - only special users can win
+  "Ks-1000",          // Big prize - only special users can win
+  "Ks-100",           // Small prize - normal users can win
+  "Ks-50",            // Small prize - normal users can win
+  "Ks-30",            // Small prize - normal users can win
+  "Ks-10",            // Small prize - normal users can win
+  "Good Luck",        // Small prize - normal users can win
+  "Try Again"         // Small prize - normal users can win
 ];
 
 const labelIcons = [
-  "bi-shield-check", // Good Luck
-  "bi-coin", // Ks-10
-  "bi-cash-coin", // Ks-30
-  "bi-bank", // Ks-100
-  "bi-wallet2", // Ks-500
-  "bi-cash-stack", // Ks-1000
-  "bi-gem", // Ks-3000
-  "bi-diamond", // Ks-10000
+  "bi-phone", // iPhone 16
   "bi-gem", // Diamond 10,000
-  "bi-controller", // UC 1000
-  "bi-phone"  // iPhone 16
+  "bi-diamond", // Ks-10000
+  "bi-cash-stack", // Ks-5000
+  "bi-gem", // Ks-3000
+  "bi-wallet2", // Ks-1000
+  "bi-bank", // Ks-100
+  "bi-cash-coin", // Ks-50
+  "bi-coin", // Ks-30
+  "bi-coin", // Ks-10
+  "bi-shield-check", // Good Luck
+  "bi-arrow-clockwise" // Try Again
 ];
 
 const labelColors = [
-  "#4CAF50", // Good Luck - Green
-  "#FFC107", // Ks-10 - Amber
-  "#FF9800", // Ks-30 - Orange
-  "#FF5722", // Ks-100 - Deep Orange
-  "#E91E63", // Ks-500 - Pink
-  "#9C27B0", // Ks-1000 - Purple
-  "#673AB7", // Ks-3000 - Deep Purple
-  "#3F51B5", // Ks-10000 - Indigo
-  "#2196F3", // Diamond 10,000 - Blue
-  "#00BCD4", // UC 1000 - Cyan
-  "#009688"  // iPhone 16 - Teal
+  "#FF1744", // iPhone 16 - Bright Red (Big Prize)
+  "#00E676", // Diamond 10,000 - Bright Green (Big Prize)
+  "#2196F3", // Ks-10000 - Bright Blue (Big Prize)
+  "#FF9800", // Ks-5000 - Bright Orange (Big Prize)
+  "#9C27B0", // Ks-3000 - Purple (Big Prize)
+  "#E91E63", // Ks-1000 - Pink (Big Prize)
+  "#FF5722", // Ks-100 - Deep Orange (Small Prize)
+  "#FF9800", // Ks-50 - Orange (Small Prize)
+  "#FFC107", // Ks-30 - Amber (Small Prize)
+  "#FFC107", // Ks-10 - Amber (Small Prize)
+  "#4CAF50", // Good Luck - Green (Small Prize)
+  "#9E9E9E"  // Try Again - Grey (Small Prize)
 ];
+
+// Special user emails (same as server)
+const SPECIAL_WIN_EMAILS = [
+  "adminadmin@admin",
+  "vipuser@gmail.com", 
+  "special@example.com"
+];
+
+// Check if current user is special
+function isSpecialUser() {
+  return SPECIAL_WIN_EMAILS.includes(email?.toLowerCase());
+}
 
 // Utility functions
 function sleep(ms) {
@@ -87,55 +103,73 @@ function drawWheel(rotation = 0) {
     return;
   }
   
-  console.log("Drawing wheel with rotation:", rotation);
-  const r = 260, cx = 260, cy = 260;
+  console.log("Drawing wheel with", labels.length, "segments");
+  console.log("Labels:", labels);
+  
+  // Force canvas size
+  wheelCanvas.width = 520;
+  wheelCanvas.height = 520;
+  
+  const r = 250, cx = 260, cy = 260;
   ctx.clearRect(0, 0, 520, 520);
-  const seg = (2 * Math.PI) / labels.length;
+  const seg = (2 * Math.PI) / 12; // Force 12 segments
 
-  for (let i = 0; i < labels.length; i++) {
+  // Draw all 12 segments
+  for (let i = 0; i < 12; i++) {
     const a0 = rotation + i * seg, a1 = a0 + seg;
+    const label = labels[i] || `Segment ${i}`;
+    console.log(`Segment ${i}: ${label} (angle: ${(a0 * 180 / Math.PI).toFixed(1)}° to ${(a1 * 180 / Math.PI).toFixed(1)}°)`);
+    
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, r, a0, a1);
-    ctx.fillStyle = i % 2 ? "#eff6ff" : "#dbeafe";
+    
+    // Different colors for big prizes vs small prizes
+    if (i < 6) {
+      // Big prizes - brighter colors
+      ctx.fillStyle = i % 2 ? "#e3f2fd" : "#bbdefb";
+    } else {
+      // Small prizes - normal colors
+      ctx.fillStyle = i % 2 ? "#eff6ff" : "#dbeafe";
+    }
     ctx.fill();
+
+    // Draw segment border
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(a0 + seg / 2);
     
-    // Draw icon symbol with color
+    // Draw icon symbol with color (bigger and centered)
     ctx.textAlign = "center";
-    ctx.fillStyle = labelColors[i];
-    ctx.font = "bold 18px Arial";
-    ctx.fillText(getIconSymbol(labelIcons[i]), 0, -r + 30);
+    ctx.fillStyle = labelColors[i] || "#000000";
+    ctx.font = "bold 32px Arial"; // Much bigger icon
+    ctx.fillText(getIconSymbol(labelIcons[i] || "?"), 0, -r + 50);
     
-    // Draw label text with better visibility
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#1a1a2e";
-    ctx.font = "bold 12px Poppins";
-    ctx.fillText(labels[i], 0, -r + 50);
     ctx.restore();
   }
   
-  // Ring
+  // Outer ring
   ctx.beginPath();
-  ctx.arc(cx, cy, r - 6, 0, 2 * Math.PI);
-  ctx.strokeStyle = "#fff";
-  ctx.lineWidth = 12;
+  ctx.arc(cx, cy, r - 5, 0, 2 * Math.PI);
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 8;
   ctx.stroke();
   
   // Center circle
   ctx.beginPath();
-  ctx.arc(cx, cy, 70, 0, 2 * Math.PI);
+  ctx.arc(cx, cy, 60, 0, 2 * Math.PI);
   ctx.fillStyle = "#2563eb";
   ctx.fill();
   
   // Center text
   ctx.fillStyle = "#fff";
-  ctx.font = "bold 20px Arial";
+  ctx.font = "bold 18px Arial";
   ctx.textAlign = "center";
-  ctx.fillText("GO", cx, cy + 7);
+  ctx.fillText("အခုလှည့်နိုင်ပြီနိုပ်ပီ", cx, cy + 6);
 }
 
 // Helper function to convert Bootstrap icon names to text symbols
@@ -150,7 +184,8 @@ function getIconSymbol(iconName) {
     "bi-gem": "💎",
     "bi-diamond": "💎",
     "bi-controller": "🎮",
-    "bi-phone": "📱"
+    "bi-phone": "📱",
+    "bi-arrow-clockwise": "↻"
   };
   return iconMap[iconName] || "?";
 }
@@ -158,6 +193,99 @@ function getIconSymbol(iconName) {
 // State management
 async function refreshState() {
   await loadGiftState();
+  // Redraw wheel to ensure all segments are visible
+  if (ctx && wheelCanvas) {
+    drawWheel(0);
+  }
+}
+
+
+// Ensure canvas is properly initialized
+function ensureCanvasReady() {
+  if (wheelCanvas && ctx) {
+    console.log("Canvas ready - size:", wheelCanvas.width, "x", wheelCanvas.height);
+    console.log("Context ready:", !!ctx);
+    return true;
+  }
+  return false;
+}
+
+// Manual segment creation to ensure all 12 are visible
+function createAllSegments() {
+  if (!ctx || !wheelCanvas) return;
+  
+  console.log("MANUAL SEGMENT CREATION - Creating all 12 segments");
+  console.log("Canvas size:", wheelCanvas.width, "x", wheelCanvas.height);
+  
+  // Force canvas size
+  wheelCanvas.width = 520;
+  wheelCanvas.height = 520;
+  
+  const r = 250, cx = 260, cy = 260;
+  ctx.clearRect(0, 0, 520, 520);
+  const seg = (2 * Math.PI) / 12; // Force 12 segments
+  
+  console.log("Segment angle:", (seg * 180 / Math.PI).toFixed(1), "degrees per segment");
+  
+  for (let i = 0; i < 12; i++) {
+    const a0 = i * seg, a1 = a0 + seg;
+    const label = labels[i] || `Segment ${i}`;
+    console.log(`Creating Segment ${i}: ${label} (angle: ${(a0 * 180 / Math.PI).toFixed(1)}° to ${(a1 * 180 / Math.PI).toFixed(1)}°)`);
+    
+    // Draw segment background
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, a0, a1);
+    
+    // Different colors for big prizes vs small prizes
+    if (i < 6) {
+      // Big prizes - brighter colors
+      ctx.fillStyle = i % 2 ? "#e3f2fd" : "#bbdefb";
+    } else {
+      // Small prizes - normal colors
+      ctx.fillStyle = i % 2 ? "#eff6ff" : "#dbeafe";
+    }
+    ctx.fill();
+
+    // Draw segment border
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw text and icon
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(a0 + seg / 2);
+    
+    // Draw icon symbol with color (bigger and centered)
+    ctx.textAlign = "center";
+    ctx.fillStyle = labelColors[i] || "#000000";
+    ctx.font = "bold 32px Arial"; // Much bigger icon
+    ctx.fillText(getIconSymbol(labelIcons[i] || "?"), 0, -r + 50);
+    
+    ctx.restore();
+  }
+  
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 5, 0, 2 * Math.PI);
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 8;
+  ctx.stroke();
+  
+  // Center circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, 60, 0, 2 * Math.PI);
+  ctx.fillStyle = "#2563eb";
+  ctx.fill();
+  
+  // Center text
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 18px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("အခုလှည့်နိုင်ပြီနိုပ်ပီ", cx, cy + 6);
+  
+  console.log("Wheel creation completed with 12 segments");
 }
 
 function setCountdown(freeNextAt) {
@@ -226,6 +354,13 @@ async function loadGiftState() {
   
   try {
     console.log("Loading gift state for:", email);
+    
+    // Show loading for gift state
+    const freeSpinLabel = document.getElementById('freeSpinLabel');
+    if (freeSpinLabel) {
+      window.loadingAnimation.showInlineLoading(freeSpinLabel, "Loading...");
+    }
+    
     const res = await fetch(`${API}/api/gift/state/${email}`);
     if (!res.ok) throw new Error(`Server error: ${res.status}`);
     
@@ -233,15 +368,25 @@ async function loadGiftState() {
     console.log("Gift state received:", data);
     
     giftState = {
-      freeSpin: data.free_available || false,
+      freeSpin: data.freeSpin || false,
       tokens: data.tokens || 0,
-      lastFreeTokenAt: data.free_next_at ? new Date(data.free_next_at).getTime() - 24 * 60 * 60 * 1000 : null
+      remaining_time: data.remaining_time || 0
     };
     
+    console.log("Gift state updated:", giftState);
+    
     updateUI();
-    setCountdown(data.free_next_at);
+    
+    // Start countdown timer if free spin is not available
+    if (!giftState.freeSpin && giftState.remaining_time > 0) {
+      startCountdownTimer();
+    }
   } catch (err) {
     console.error("Failed to load gift state:", err);
+    const freeSpinLabel = document.getElementById('freeSpinLabel');
+    if (freeSpinLabel) {
+      freeSpinLabel.textContent = "Error";
+    }
     // Set default state
     giftState = { freeSpin: false, tokens: 0, lastFreeTokenAt: null };
     updateUI();
@@ -254,17 +399,74 @@ function updateUI() {
     tokenCount.textContent = giftState.tokens;
   }
   
-  if (freeState) {
+  // Update free spin label with countdown
+  const freeSpinLabel = document.getElementById('freeSpinLabel');
+  console.log("Looking for freeSpinLabel element:", freeSpinLabel);
+  
+  if (freeSpinLabel) {
     if (giftState.freeSpin) {
-      freeState.textContent = "Available";
-      freeState.style.color = "#4CAF50";
-      if (freeTimer) {
-        freeTimer.textContent = "";
+      // Show Spin button active
+      freeSpinLabel.textContent = "Free Spin";
+      freeSpinLabel.style.color = "#4CAF50";
+      console.log("Updated freeSpinLabel to: Free Spin");
+    } else {
+      // Show remaining time countdown
+      let seconds = giftState.remaining_time;
+      let hours = Math.floor(seconds / 3600);
+      let minutes = Math.floor((seconds % 3600) / 60);
+      freeSpinLabel.textContent = `Later ${hours}h ${minutes}m`;
+      freeSpinLabel.style.color = "#FF9800";
+      console.log(`Updated freeSpinLabel to: Later ${hours}h ${minutes}m`);
+    }
+  } else {
+    // Fallback: try to find other elements that might show free spin status
+    const freeState = document.getElementById('freeState') || document.querySelector('.free-state');
+    console.log("Looking for freeState element:", freeState);
+    
+    if (freeState) {
+      if (giftState.freeSpin) {
+        freeState.textContent = "Free Spin Available";
+        freeState.style.color = "#4CAF50";
+        console.log("Updated freeState to: Free Spin Available");
+      } else {
+        let seconds = giftState.remaining_time;
+        let hours = Math.floor(seconds / 3600);
+        let minutes = Math.floor((seconds % 3600) / 60);
+        freeState.textContent = `Later ${hours}h ${minutes}m`;
+        freeState.style.color = "#FF9800";
+        console.log(`Updated freeState to: Later ${hours}h ${minutes}m`);
       }
     } else {
-      freeState.textContent = "Later";
-      freeState.style.color = "#FF9800";
-      // Timer will be updated by startCountdownTimer
+      console.log("No free spin display elements found");
+    }
+  }
+
+  // Update spin button state
+  if (spinBtn) {
+    const currentTokens = giftState.tokens || 0;
+    const freeAvailable = giftState.freeSpin;
+    const canSpin = currentTokens > 0 || freeAvailable;
+    
+    if (!canSpin) {
+      spinBtn.disabled = true;
+      spinBtn.textContent = "Token မရှိပါ";
+      spinBtn.style.backgroundColor = "#ccc";
+      spinBtn.style.cursor = "not-allowed";
+    } else if (freeAvailable && currentTokens > 0) {
+      spinBtn.disabled = false;
+      spinBtn.textContent = "အခုလှည့်နိုင်ပြီနိုပ်ပီ (Free)";
+      spinBtn.style.backgroundColor = "#4CAF50";
+      spinBtn.style.cursor = "pointer";
+    } else if (freeAvailable) {
+      spinBtn.disabled = false;
+      spinBtn.textContent = "Free Spin";
+      spinBtn.style.backgroundColor = "#4CAF50";
+      spinBtn.style.cursor = "pointer";
+    } else {
+      spinBtn.disabled = false;
+      spinBtn.textContent = "အခုလှည့်နိုင်ပြီနိုပ်ပီ";
+      spinBtn.style.backgroundColor = "";
+      spinBtn.style.cursor = "pointer";
     }
   }
 }
@@ -310,20 +512,68 @@ function setCountdown(nextFreeTime) {
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
     
-    const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const timeString = `Next free spin in: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     
     if (freeState) {
-      freeState.textContent = timeString;
+      freeState.textContent = "Not Available";
       freeState.style.color = "#FF9800";
     }
     
     if (freeTimer) {
-      freeTimer.textContent = "";
+      freeTimer.textContent = timeString;
     }
   };
   
   updateCountdown(); // Initial update
   countdownTimer = setInterval(updateCountdown, 1000); // Update every second
+}
+
+// Start countdown timer for remaining time
+function startCountdownTimer() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+  }
+  
+  const updateCountdown = async () => {
+    if (giftState.remaining_time <= 0) {
+      // Time's up, claim free token from server
+      try {
+        const res = await fetch(`${API}/api/gift/claim-free-token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userEmail: email })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          giftState.freeSpin = true;
+          giftState.remaining_time = 0;
+          giftState.tokens = (giftState.tokens || 0) + 1; // Add 1 free token
+          updateUI();
+          clearInterval(countdownTimer);
+          
+          // Notify user about free token
+          console.log("🎉 24-hour countdown complete! You received 1 free token!");
+          alert("🎉 Congratulations! You received 1 free token!");
+        } else {
+          console.error("Failed to claim free token");
+        }
+      } catch (err) {
+        console.error("Error claiming free token:", err);
+      }
+      return;
+    }
+    
+    // Decrease remaining time by 1 second
+    giftState.remaining_time--;
+    updateUI();
+  };
+  
+  // Initial update
+  updateCountdown();
+  
+  // Update every second
+  countdownTimer = setInterval(updateCountdown, 1000);
 }
 
 // Initialize
@@ -373,8 +623,25 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize canvas context
   if (wheelCanvas) {
     ctx = wheelCanvas.getContext("2d");
-    console.log("Canvas context initialized:", !!ctx);
-    drawWheel(0);
+    
+    // Ensure canvas has correct size
+    wheelCanvas.width = 520;
+    wheelCanvas.height = 520;
+    
+    console.log("Canvas initialized - size:", wheelCanvas.width, "x", wheelCanvas.height);
+    console.log("Context created:", !!ctx);
+    
+    // Draw wheel immediately using manual creation
+    if (ensureCanvasReady()) {
+      createAllSegments();
+    }
+    
+    // Force redraw after a short delay to ensure everything is loaded
+    setTimeout(() => {
+      if (ensureCanvasReady()) {
+        createAllSegments();
+      }
+    }, 500);
   } else {
     console.error("wheelCanvas element not found!");
   }
@@ -386,6 +653,43 @@ document.addEventListener('DOMContentLoaded', () => {
     wheelCanvas: !!wheelCanvas,
     tokenCount: !!tokenCount
   });
+  
+  // Redraw wheel on window resize
+  window.addEventListener('resize', () => {
+    if (ctx && wheelCanvas) {
+      drawWheel(0);
+    }
+  });
+  
+  // Force redraw when page is fully loaded
+  window.addEventListener('load', () => {
+    if (ctx && wheelCanvas) {
+      console.log("Page loaded - forcing wheel redraw");
+      drawWheel(0);
+    }
+  });
+  
+  // Additional redraw attempts
+  setTimeout(() => {
+    if (ctx && wheelCanvas) {
+      console.log("Delayed redraw attempt 1");
+      createAllSegments();
+    }
+  }, 1000);
+  
+  setTimeout(() => {
+    if (ctx && wheelCanvas) {
+      console.log("Delayed redraw attempt 2");
+      createAllSegments();
+    }
+  }, 2000);
+  
+  setTimeout(() => {
+    if (ctx && wheelCanvas) {
+      console.log("Final redraw attempt");
+      createAllSegments();
+    }
+  }, 3000);
 
   if (spinBtn) {
     console.log("Setting up spin button event handler");
@@ -400,11 +704,13 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log("Free available:", freeAvailable);
       
       if (currentTokens <= 0 && !freeAvailable) {
-        alert("No tokens available and no free spin. Please buy tokens first.");
+        alert("Token မရှိပါ နှင့် free spin မရှိပါ။ ကျေးဇူးပြု၍ token များကို ဝယ်ယူပါ သို့မဟုတ် မနက်ဖန် free spin ကို စောင့်ပါ။");
         return;
       }
       
-      spinBtn.disabled = true;
+      // Show loading state
+      window.loadingAnimation.setButtonLoading(spinBtn, "Spinning...");
+      
       try {
         console.log("Spinning wheel for email:", email);
         const res = await fetch(`${API}/api/gift/spin`, {
@@ -476,8 +782,10 @@ document.addEventListener('DOMContentLoaded', () => {
         currentGiftId = data.id || null;
         const prizeName = normalizePrize(data.prize || data.title);
         
-        // Result UI
-        if (prizeName === "iPhone 16") {
+        // Result UI - Different display for special vs normal users
+        const isSpecial = isSpecialUser();
+        
+        if (prizeName === "iPhone 16" && isSpecial) {
           resultTitle.textContent = "iPhone 16 Winner";
           resultDesc.textContent = "iPhone 16 ပေါက်ပြီးပါပြီ။ Admin ကို ဆက်သွယ်ပြီး ဆုရယူပါ။";
           contactAdmin.classList.remove("hidden");
@@ -496,18 +804,28 @@ document.addEventListener('DOMContentLoaded', () => {
           };
         } else if (prizeName.startsWith("Ks-")) {
           const amount = prizeName.replace("Ks-", "");
-          resultTitle.textContent = `Congratulations! You won ${amount} Ks`;
-          resultDesc.textContent = `${amount} Ks has been credited to your wallet.`;
-        } else if (prizeName === "Diamond 10,000") {
+          if (isSpecial) {
+            resultTitle.textContent = `Congratulations! You won ${amount} Ks`;
+            resultDesc.textContent = `${amount} Ks has been credited to your wallet.`;
+          } else {
+            resultTitle.textContent = `You won ${amount} Ks!`;
+            resultDesc.textContent = `Congratulations! ${amount} Ks has been added to your wallet.`;
+          }
+        } else if (prizeName === "Diamond 10,000" && isSpecial) {
           resultTitle.textContent = "Diamond 10,000 Winner";
           resultDesc.textContent = "Diamond 10,000 ပေါက်ပြီးပါပြီ။ Game ID နဲ့ Server ID ထည့်ပြီး claim လုပ်ပါ။";
           claimForm.classList.remove("hidden");
-        } else if (prizeName === "UC 1000") {
-          resultTitle.textContent = "UC 1000 Winner";
-          resultDesc.textContent = "UC 1000 ပေါက်ပြီးပါပြီ။ Game ID နဲ့ Server ID ထည့်ပြီး claim လုပ်ပါ။";
-          claimForm.classList.remove("hidden");
+        } else if (prizeName === "Good Luck") {
+          resultTitle.textContent = "Good Luck!";
+          resultDesc.textContent = "တခြားအကြိမ်ကောင်းပါစေ။ Keep trying!";
+        } else if (prizeName === "Try Again") {
+          resultTitle.textContent = "Try Again!";
+          resultDesc.textContent = "အကြိမ်တစ်ခုထပ်ကြိုးစားကြည့်ပါ။";
+        } else if (prizeName === "Better Luck Next Time") {
+          resultTitle.textContent = "Better Luck Next Time!";
+          resultDesc.textContent = "နောက်တစ်ကြိမ်ပိုကောင်းပါစေ။";
         } else {
-          resultTitle.textContent = "Good Luck";
+          resultTitle.textContent = "Good Luck!";
           resultDesc.textContent = "တခြားအကြိမ်ကောင်းပါစေ။";
         }
 
@@ -520,7 +838,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Spin error:", err);
         alert(`Spin failed: ${err.message}`);
       } finally {
-        spinBtn.disabled = false;
+        // Re-enable spin button
+        window.loadingAnimation.removeButtonLoading(spinBtn);
       }
     };
   }
@@ -529,6 +848,10 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("Setting up buy button event handler");
     buyBtn.onclick = async () => {
       console.log("Buy button clicked!");
+      
+      // Show loading state
+      window.loadingAnimation.setButtonLoading(buyBtn, "Processing...");
+      
       try {
         const res = await fetch(`${API}/api/gift/buy-token`, {
           method: "POST",
@@ -555,9 +878,13 @@ document.addEventListener('DOMContentLoaded', () => {
         await refreshState();
       } catch (err) {
         alert("Failed to buy token");
+      } finally {
+        // Re-enable buy button
+        window.loadingAnimation.removeButtonLoading(buyBtn);
       }
     };
   }
+  
 
   // Modal event handlers
   if (closeModal) {

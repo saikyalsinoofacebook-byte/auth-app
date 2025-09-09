@@ -118,9 +118,10 @@
     : window.location.origin;
 
   const USER = JSON.parse(localStorage.getItem("user"));
+  const USER_ID = USER?.id || null;
   const EMAIL = USER?.email || null;
 
-  if (!EMAIL) {
+  if (!USER_ID) {
     alert("ကျေးဇူးပြု၍ လော့ဂ်အင် ဝင်ပါ။");
     window.location.href = "login.html";
   }
@@ -177,13 +178,21 @@ function setMethod(method) {
     try {
       // ✅ FormData သုံးပြီး screenshot file upload
       const formData = new FormData();
-      formData.append("email", EMAIL);
-      formData.append("amount", amount);
+      formData.append("user_id", USER_ID);
+      formData.append("amount", parseFloat(amount));
       formData.append("method", method);
       formData.append("remark", remark);
+      
       if (screenshotFile) {
         formData.append("screenshot", screenshotFile);
       }
+
+      console.log("Sending deposit request with FormData");
+      console.log("user_id:", USER_ID);
+      console.log("amount:", parseFloat(amount));
+      console.log("method:", method);
+      console.log("remark:", remark);
+      console.log("screenshot file:", screenshotFile ? screenshotFile.name : "none");
 
       const res = await fetch(`${API_BASE}/api/deposit`, {
         method: "POST",

@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   // ===== Wallet Balance Load =====
   const user = JSON.parse(localStorage.getItem("user"));  
-  if (user && user.email) {
-    fetch(`/api/wallet/${user.email}`)
+  if (user && user.id) {
+    fetch(`/api/wallet/${user.id}`)
       .then(res => res.json())
       .then(data => {
         const balance = data.balance || 0;
@@ -145,6 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
       method: selectedMethod,
       email: user?.email || "",
       gameId: gameId,
+      gameName: "HOK",
       payerName: document.getElementById("payerName")?.value || "",
       payerPhone: document.getElementById("payerPhone")?.value || "",
       screenshot: document.getElementById("screenshot")?.files[0]?.name || ""
@@ -167,6 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
       formData.append("price", orderData.price);
       formData.append("method", orderData.method);
       formData.append("gameId", orderData.gameId);
+      formData.append("gameName", orderData.gameName);
       formData.append("payerName", orderData.payerName);
       formData.append("payerPhone", orderData.payerPhone);
       formData.append("screenshot", document.getElementById("screenshot").files[0]);

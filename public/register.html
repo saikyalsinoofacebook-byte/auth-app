@@ -47,5 +47,20 @@
 
   <!-- Link to app.js -->
   <script src="app.js"></script>
+  
+  <!-- Auto-login Check -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Check if user is already logged in
+      const user = localStorage.getItem("user");
+      const email = localStorage.getItem("email");
+      
+      if (user && email) {
+        // User is already logged in, redirect to home page
+        console.log("User already logged in, redirecting to home page...");
+        window.location.href = "home.html";
+      }
+    });
+  </script>
 </body>
 </html>

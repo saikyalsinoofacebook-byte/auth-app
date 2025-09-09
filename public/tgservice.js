@@ -10,6 +10,7 @@ let currentItem = null;
 
 // State
 let email = null;
+let userId = null;
 let walletBalance = 0;
 
 // Initialize when DOM is loaded
@@ -17,8 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('Telegram Services page loaded');
   initializeElements();
   setupEventListeners();
-  loadUserData();
-  loadWalletBalance();
+  loadUserData().then(() => {
+    loadWalletBalance();
+  });
 });
 
 function initializeElements() {
@@ -295,7 +297,9 @@ async function loadUserData() {
     if (userData) {
       const user = JSON.parse(userData);
       email = user.email;
+      userId = user.id;
       console.log('User email loaded:', email);
+      console.log('User ID loaded:', userId);
     } else {
       console.log('No user data found');
       // Redirect to login if no user data
@@ -308,11 +312,11 @@ async function loadUserData() {
 }
 
 async function loadWalletBalance() {
-  if (!email) return;
+  if (!userId) return;
   
   try {
-    console.log('Loading wallet balance for:', email);
-    const response = await fetch(`${API}/api/wallet/${email}`);
+    console.log('Loading wallet balance for user ID:', userId);
+    const response = await fetch(`${API}/api/wallet/${userId}`);
     
     if (!response.ok) {
       throw new Error(`Server error: ${response.status}`);

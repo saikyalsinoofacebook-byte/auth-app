@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const giftBtn = document.querySelector(".gift");
   const trophyBtn = document.querySelector(".trophy");
 if (giftBtn) giftBtn.addEventListener("click", () => {
+  window.showPageTransition();
   window.location.href = "gift.html";
 });
   if (trophyBtn) trophyBtn.addEventListener("click", () => alert("🏆 Achievements page!"));
