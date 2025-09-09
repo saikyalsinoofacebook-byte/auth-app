@@ -1,0 +1,179 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #000; /* အနက်အနည်းငယ် background base */
+}
+
+
+/* Hero Section */
+.hero {
+  background: url("images/backgrounds.png") no-repeat center center/cover;
+  min-height: 100vh;   /* Fullscreen Hero */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
+}
+
+/* Services Section */
+#services {
+  background: #111827;  /* Hero နဲ့ ခွဲဖို့ အနည်းငယ် dark bg */
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+
+.auth-box {
+  background: rgba(255,255,255,0.12);
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 320px; /* 👈 အများကြီးမဖြစ်အောင် သေးသေးထား */
+  width: 100%;
+  margin: 0 auto;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+  backdrop-filter: blur(10px);
+}
+
+.service-card {
+  background: #1f2937; /* dark blue */
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  color: #fff;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+.service-card:hover {
+  transform: translateY(-5px);
+}
+.service-card img.service-icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 15px;
+}
+.service-card .badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.service-card h5 {
+  font-weight: 600;
+  margin: 10px 0;
+}
+.service-card p {
+  font-size: 14px;
+  color: #ccc;
+}
+
+.auth-box h2 {
+  color: #fff;
+  margin-bottom: 8px;
+  font-size: 20px;
+}
+.auth-box p {
+  color: #ccc;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 6px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+}
+
+.primary-btn {
+  width: 100%;
+  padding: 10px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 8px;
+}
+.primary-btn:hover {
+  background: #1d4ed8;
+}
+
+.social-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.google-btn, .telegram-btn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  min-width: 120px;
+}
+.google-btn {
+  background: #fff;
+  color: #333;
+}
+.telegram-btn {
+  background: #0088cc;
+  color: #fff;
+}
+
+.divider {
+  margin: 12px 0;
+  color: #bbb;
+  font-size: 12px;
+  position: relative;
+}
+.divider::before, .divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 35%;
+  height: 1px;
+  background: #555;
+}
+.divider::before { left: 0; }
+.divider::after { right: 0; }
+
+a {
+  color: #4f9cf9;
+  text-decoration: none;
+  font-size: 13px;
+}
+a:hover { text-decoration: underline; }
+
+.switch { color: #ddd; margin-top: 10px; font-size: 13px; }
+.forgot { display: block; margin-top: 8px; color: #aaa; font-size: 12px; }
+
+.footer-links {
+  margin-top: 15px;
+  color: #bbb;
+  font-size: 12px;
+}
+.footer-links a {
+  margin: 0 6px;
+  color: #aaa;
+}
+.footer-links a:hover { color: #fff; }
+
+/* Smaller screens */
+@media (max-width: 480px) {
+  .auth-box {
+    padding: 15px;
+    max-width: 90%;
+  }
+}

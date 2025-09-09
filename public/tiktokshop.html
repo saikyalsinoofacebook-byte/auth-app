@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TikTok Services</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="tiktokshop.css">
+  <link rel="stylesheet" href="bottom-nav.css">
+</head>
+<body>
+  <!-- Top Bar -->
+  <header class="topbar">
+    <button class="icon-btn" onclick="goToHome()"><i class="bi bi-arrow-left"></i></button>
+    <h1 class="title">TikTok Services</h1>
+    <div class="wallet">
+      <i class="bi bi-wallet2"></i>
+      <span id="wallet-balance">0</span> ကျပ်
+    </div>
+  </header>
+
+  <!-- Coming Soon Section -->
+  <main class="coming-soon-container">
+    <div class="coming-soon-card">
+      <div class="icon-wrapper">
+        <i class="bi bi-tiktok"></i>
+      </div>
+      <h2>TikTok Services</h2>
+      <p class="message">လက်တလောတွင် service များမရရှိနိုင်သေးပါ update အသစ်တွင်ထည့်သွင်းပေးပါမယ်</p>
+      <button class="back-btn" onclick="goToHome()">
+        <i class="bi bi-house"></i>
+        Back to Home
+      </button>
+    </div>
+  </main>
+
+  <script src="tiktokshop.js"></script>
+  <script src="bottom-nav.js"></script>
+</body>
+</html>

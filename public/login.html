@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Arthur Game Shop — Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-box">
+      <h2>Welcome to Arthur Game Shop</h2>
+      <p>Login to access your account</p>
+
+      <!-- Social Login -->
+      <div class="social-buttons">
+        <button id="googleBtn" class="google-btn">
+          <img src="images/googlelogo.png" alt="Google Logo" class="icon"> Google
+        </button>
+        <button class="telegram-btn" onclick="window.open('https://t.me/arthurtonotebot','_blank')">
+          <img src="images/telegramloginlogo.png" alt="Telegram Logo" class="icon"> Telegram
+        </button>
+      </div>
+
+      <div class="divider">or</div>
+
+      <!-- Login Form -->
+      <form id="loginForm">
+        <input type="email" id="logEmail" placeholder="Email Address" required>
+        <input type="password" id="logPassword" placeholder="Password" required>
+        <button type="submit" class="primary-btn">Login</button>
+      </form>
+
+      <div id="login-error" style="color:red; margin-top:8px;"></div>
+
+      <a href="#" class="forgot">Forgot Password?</a>
+
+      <p class="switch">Don’t have an account? <a href="register.html">Create Account</a></p>
+    </div>
+
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="#">Shop</a>
+      <a href="#">Contact Us</a>
+    </div>
+  </div>
+
+  <!-- Connect to backend -->
+  <script src="app.js"></script>
+  
+  <!-- Auto-login Check -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Check if user is already logged in
+      const user = localStorage.getItem("user");
+      const email = localStorage.getItem("email");
+      
+      if (user && email) {
+        // User is already logged in, redirect to home page
+        console.log("User already logged in, redirecting to home page...");
+        window.location.href = "home.html";
+      }
+    });
+  </script>
+</body>
+</html>

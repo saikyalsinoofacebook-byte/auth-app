@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLBB Shop</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="mlbbshop.css">
+  <link rel="stylesheet" href="bottom-nav.css">
+</head>
+<body>
+  <!-- Top Bar -->
+  <header class="topbar">
+    <button class="icon-btn" onclick="history.back()"><i class="bi bi-arrow-left"></i></button>
+    <h1 class="title">MLBB Shop</h1>
+    <div class="wallet">
+      <i class="bi bi-wallet2"></i>
+      <span id="wallet-balance">0</span> ကျပ်
+    </div>
+  </header>
+
+  <!-- Banner -->
+  <section class="banner">
+    <img src="images/mlbbbanner.jpg" alt="MLBB Banner">
+  </section>
+
+  <!-- Items Grid -->
+  <main class="grid" id="grid">
+    <!-- Original Diamond Packages with Badges -->
+    <article class="card" data-name="11 Dia" data-price="950" data-img="images/lowMLBB_NewDemom.png">
+      <img src="images/lowMLBB_NewDemom.png" alt="11 Dia">
+      <h4>11 Dia</h4>
+      <p>950 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="22 Dia" data-price="1850" data-img="images/lowMLBB_NewDemom.png">
+      <img src="images/lowMLBB_NewDemom.png" alt="22 Dia">
+      <h4>22 Dia</h4>
+      <p>1,850 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="50+50 Dia" data-price="3200" data-img="images/first recharge150_MLBB_NewDemom-min.png">
+      <span class="badge hot">HOT</span>
+      <img src="images/first recharge150_MLBB_NewDemom-min.png" alt="50+50 Dia">
+      <h4>50+50 Dia</h4>
+      <p>3,200 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="56 Dia" data-price="4550" data-img="images/lowMLBB_NewDemom.png">
+      <img src="images/lowMLBB_NewDemom.png" alt="56 Dia">
+      <h4>56 Dia</h4>
+      <p>4,550 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="86 Dia" data-price="5050" data-img="images/lowMLBB_NewDemom.png">
+      <img src="images/lowMLBB_NewDemom.png" alt="86 Dia">
+      <h4>86 Dia</h4>
+      <p>5,050 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="112 Dia" data-price="9150" data-img="images/ltb_MLBB_NewDemom.png">
+      <img src="images/ltb_MLBB_NewDemom.png" alt="112 Dia">
+      <h4>112 Dia</h4>
+      <p>9,150 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="150+150 Dia" data-price="9650" data-img="images/first recharge150_MLBB_NewDemom-min.png">
+      <span class="badge hot">HOT</span>
+      <img src="images/first recharge150_MLBB_NewDemom-min.png" alt="150+150 Dia">
+      <h4>150+150 Dia</h4>
+      <p>9,650 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="172 Dia" data-price="10050" data-img="images/ltb_MLBB_NewDemom.png">
+      <img src="images/ltb_MLBB_NewDemom.png" alt="172 Dia">
+      <h4>172 Dia</h4>
+      <p>10,050 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="223 Dia" data-price="18250" data-img="images/ltb_MLBB_NewDemom.png">
+      <img src="images/ltb_MLBB_NewDemom.png" alt="223 Dia">
+      <h4>223 Dia</h4>
+      <p>18,250 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="250+250 Dia" data-price="15450" data-img="images/Diamond 2 First Recharge-150x150.png">
+      <span class="badge hot">HOT</span>
+      <img src="images/Diamond 2 First Recharge-150x150.png" alt="250+250 Dia">
+      <h4>250+250 Dia</h4>
+      <p>15,450 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="257 Dia" data-price="14600" data-img="images/ltb_MLBB_NewDemom.png">
+      <img src="images/ltb_MLBB_NewDemom.png" alt="257 Dia">
+      <h4>257 Dia</h4>
+      <p>14,600 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="336 Dia" data-price="27400" data-img="images/ltb_MLBB_NewDemom.png">
+      <img src="images/ltb_MLBB_NewDemom.png" alt="336 Dia">
+      <h4>336 Dia</h4>
+      <p>27,400 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="500+500 Dia" data-price="31700" data-img="images/Diamond 3 First Recharge-150x150.png">
+      <span class="badge hot">HOT</span>
+      <img src="images/Diamond 3 First Recharge-150x150.png" alt="500+500 Dia">
+      <h4>500+500 Dia</h4>
+      <p>31,700 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="570 Dia" data-price="45700" data-img="images/bg_MLBB_NewDemom.png">
+      <img src="images/bg_MLBB_NewDemom.png" alt="570 Dia">
+      <h4>570 Dia</h4>
+      <p>45,700 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="706 Dia" data-price="39550" data-img="images/bg_MLBB_NewDemom.png">
+      <img src="images/bg_MLBB_NewDemom.png" alt="706 Dia">
+      <h4>706 Dia</h4>
+      <p>39,550 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="1163 Dia" data-price="91550" data-img="images/bg_MLBB_NewDemom.png">
+      <img src="images/bg_MLBB_NewDemom.png" alt="1163 Dia">
+      <h4>1163 Dia</h4>
+      <p>91,550 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="2195 Dia" data-price="119700" data-img="images/1500_MLBB_NewDemom.png">
+      <img src="images/1500_MLBB_NewDemom.png" alt="2195 Dia">
+      <h4>2195 Dia</h4>
+      <p>119,700 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="2398 Dia" data-price="182600" data-img="images/1500_MLBB_NewDemom.png">
+      <img src="images/1500_MLBB_NewDemom.png" alt="2398 Dia">
+      <h4>2398 Dia</h4>
+      <p>182,600 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="3688 Dia" data-price="199750" data-img="images/2500_MLBB_NewDemom.png">
+      <img src="images/2500_MLBB_NewDemom.png" alt="3688 Dia">
+      <h4>3688 Dia</h4>
+      <p>199,750 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="5532 Dia" data-price="301600" data-img="images/2500_MLBB_NewDemom.png">
+      <img src="images/2500_MLBB_NewDemom.png" alt="5532 Dia">
+      <h4>5532 Dia</h4>
+      <p>301,600 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="6042 Dia" data-price="456110" data-img="images/5000_MLBB_NewDemom.png">
+      <img src="images/5000_MLBB_NewDemom.png" alt="6042 Dia">
+      <h4>6042 Dia</h4>
+      <p>456,110 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="9288 Dia" data-price="500900" data-img="images/5000_MLBB_NewDemom.png">
+      <img src="images/5000_MLBB_NewDemom.png" alt="9288 Dia">
+      <h4>9288 Dia</h4>
+      <p>500,900 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="Weekly Pack" data-price="6300" data-img="images/MLBB-Diamond-Pass_Popular-tag (2).png">
+      <span class="badge new">NEW</span>
+      <img src="images/MLBB-Diamond-Pass_Popular-tag (2).png" alt="Weekly Pack">
+      <h4>Weekly Pack</h4>
+      <p>6,300 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="Twilight Pass" data-price="33150" data-img="images/twlp.png">
+      <span class="badge new">NEW</span>
+      <img src="images/twlp.png" alt="Twilight Pass">
+      <h4>Twilight Pass</h4>
+      <p>33,150 ကျပ်</p>
+    </article>
+  </main>
+
+  <!-- Modal -->
+  <section id="modal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" id="closeModal"><i class="bi bi-x-lg"></i></button>
+      <h3>Confirm Purchase</h3>
+      <div class="item-preview">
+        <img id="modal-img" src="" alt="">
+        <h4 id="modal-name"></h4>
+        <p>ဈေးနှုန်း: <span id="modal-price"></span> ကျပ်</p>
+        <p>လက်ကျန်ငွေ: <span id="modal-balance"></span> ကျပ်</p>
+      </div>
+
+      <div class="input-group">
+        <label><i class="bi bi-controller"></i> Game ID</label>
+        <input type="text" id="gameId" placeholder="Enter Game ID">
+      </div>
+      <div class="input-group">
+        <label><i class="bi bi-hdd-network"></i> Server ID</label>
+        <input type="text" id="serverId" placeholder="Enter Server ID">
+      </div>
+
+      <div class="payment-method">
+        <h5>Payment Method</h5>
+        <div class="options">
+          <button class="method" data-method="wallet"><i class="bi bi-wallet2"></i> Wallet</button>
+          <button class="method" data-method="kpay"><img src="images/kpaylogo.jpg" alt="KPay"></button>
+          <button class="method" data-method="wavepay"><img src="images/wavepaylog.jpg" alt="WavePay"></button>
+        </div>
+      </div>
+
+      <div id="payment-extra"></div>
+
+      <div class="actions">
+        <button id="cancelBtn">Cancel</button>
+        <button id="confirmBtn">Confirm</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="mlbbshop.js"></script>
+  <script src="bottom-nav.js"></script>
+</body>
+</html>

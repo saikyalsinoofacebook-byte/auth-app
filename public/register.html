@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Arthur Game Shop — Register</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-box">
+      <h2>Create Account</h2>
+      <p>Join Arthur Game Shop today</p>
+
+      <!-- Social Login -->
+      <div class="social-buttons">
+        <button id="googleBtn" class="google-btn" disabled>
+          <img src="images/googlelogo.png" alt="Google Logo" class="icon"> Google (coming soon)
+        </button>
+        <button class="telegram-btn" onclick="window.open('https://t.me/arthurtonotebot','_blank')">
+          <img src="images/telegramloginlogo.png" alt="Telegram Logo" class="icon"> Telegram
+        </button>
+      </div>
+
+      <div class="divider">or</div>
+
+      <!-- Register Form -->
+      <form id="regForm">
+        <input type="text" id="regName" placeholder="Full Name" required>
+        <input type="email" id="regEmail" placeholder="Email Address" required>
+        <input type="password" id="regPassword" placeholder="Password (min 6 chars)" minlength="6" required>
+        <button type="submit" class="primary-btn">Register</button>
+      </form>
+
+      <!-- Error Box -->
+      <div id="reg-error" style="margin-top:10px;color:red;"></div>
+
+      <p class="switch">Already have an account? <a href="login.html">Login</a></p>
+    </div>
+
+    <div class="footer-links">
+      <a href="index.html">Home</a>
+      <a href="#">Shop</a>
+      <a href="#">Contact Us</a>
+    </div>
+  </div>
+
+  <!-- Link to app.js -->
+  <script src="app.js"></script>
+</body>
+</html>

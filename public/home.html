@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Arthur Game Shop — Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="bottom-nav.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/bootstrap-icons.min.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="topbar">
+    <div class="logo">
+      <img src="images/logo.png" alt="Arthur Logo">
+    </div>
+    <div class="user">
+      <div class="user-avatar">
+        <span class="user-initial">U</span>
+      </div>
+      <span id="usernameDisplay">User</span>
+    </div>
+  </header>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const usernameDisplay = document.getElementById("usernameDisplay");
+      const userInitial = document.querySelector(".user-initial");
+      
+      if (user) {
+        // Display the actual username from login/register
+        const displayName = user.username || user.name || user.email || "User";
+        usernameDisplay.textContent = displayName;
+        
+        // Set user initial (first letter of username)
+        const initial = displayName.charAt(0).toUpperCase();
+        userInitial.textContent = initial;
+      } else {
+        usernameDisplay.textContent = "Guest User";
+        userInitial.textContent = "G";
+      }
+    });
+  </script>
+
+  <!-- Banner Carousel -->
+  <section class="banner">
+    <div class="slides">
+      <img src="images/mlbbbanner.jpg" alt="MLBB Banner">
+      <img src="images/hok banner.jpg" alt="HOK Banner">
+      <img src="images/pubg banner.jpg" alt="PUBG Banner">
+    </div>
+  </section>
+
+  <!-- Marquee -->
+  <div class="marquee">
+    <p>✨ Arthur Game Shop မှ MLBB Diamond နဲ့ PUBG UC ကို အမြန်ဆုံး 🚀 နဲ့ အတိအကျ Top-Up လုပ်နိုင်ပါပြီ 💎 ယုံကြည်စိတ်ချစွာ ဝယ်ယူနိုင်ပါတယ် ✨ ကျေးဇူးတင်ပါတယ် 🙏</p>
+  </div>
+
+  <!-- Services -->
+  <section class="services">
+    <h2>Available Services</h2>
+    <div class="service-grid">
+
+<!-- Service Card 1 -->
+<div class="service-card">
+  <span class="badge hot">HOT</span>
+  <div class="image-wrapper">
+    <img src="images/mlbb.png" alt="MLBB">
+    <div class="shine"></div>
+  </div>
+  <h3>Mobile Legend</h3>
+  <p>Top up Diamond</p>
+  <div class="item-count">24 ITEMS</div>
+  <button class="buy-btn" onclick="goTo('mlbbshop.html')">Buy Now</button>
+</div>
+
+<!-- Service Card 2 -->
+<div class="service-card">
+  <span class="badge new">NEW</span>
+  <div class="image-wrapper">
+    <img src="images/hoklogo.jpg" alt="Honor of Kings">
+    <div class="shine"></div>
+  </div>
+  <h3>Honor Of King</h3>
+  <p>Top up HOK</p>
+  <div class="item-count">12 ITEMS</div>
+  <button class="buy-btn" onclick="goTo('hokshop.html')">Buy Now</button>
+</div>
+
+<!-- Service Card 3 -->
+<div class="service-card">
+  <span class="badge hot">HOT</span>
+  <div class="image-wrapper">
+    <img src="images/pubglogo.jpg" alt="PUBG">
+    <div class="shine"></div>
+  </div>
+  <h3>PUBG UC</h3>
+  <p>Top up UC</p>
+  <div class="item-count">6 ITEMS</div>
+  <button class="buy-btn" onclick="goTo('ucshop.html')">Buy Now</button>
+</div>
+
+<!-- Service Card 4 - Telegram -->
+<div class="service-card">
+  <span class="badge hot">HOT</span>
+  <div class="image-wrapper">
+    <img src="images/telegramlogo.jpg" alt="Telegram">
+    <div class="shine"></div>
+  </div>
+  <h3>Telegram</h3>
+  <p>Premium & Stars</p>
+  <div class="item-count">16 ITEMS</div>
+  <button class="buy-btn" onclick="goTo('tgservice.html')">Buy Now</button>
+</div>
+
+
+<!-- Service Card 6 -->
+<div class="service-card">
+  <div class="image-wrapper">
+    <img src="images/tiktoklogo.jpg" alt="TikTok">
+    <div class="shine"></div>
+  </div>
+  <h3>TikTok Services</h3>
+  <p>Followers, Likes & Views</p>
+  <div class="item-count">11 ITEMS</div>
+  <button class="buy-btn" onclick="goTo('tiktokshop.html')">Buy Now</button>
+</div>
+
+<!-- Service Card 6 -->
+<div class="service-card">
+  <div class="image-wrapper">
+    <img src="images/facebook.png" alt="Facebook">
+    <div class="shine"></div>
+  </div>
+  <h3>Facebook Services</h3>
+  <p>Followers, Likes & Views</p>
+  <div class="item-count">14 ITEMS</div>
+  <button class="buy-btn" onclick="goTo('fbshop.html')">Buy Now</button>
+</div>
+
+<!-- Service Card 7 -->
+<div class="service-card">
+  <div class="image-wrapper">
+    <img src="images/instagram.png" alt="Instagram">
+    <div class="shine"></div>
+  </div>
+  <h3>Instagram Services</h3>
+  <p>Followers & Story Views</p>
+  <div class="item-count">2 ITEMS</div>
+  <button class="buy-btn" onclick="goTo('igshop.html')">Buy Now</button>
+</div>
+
+    </div>
+  </section>
+
+  <!-- Floating Buttons -->
+  <div class="floating-btns">
+    <div class="gift">
+      <i class="bi bi-gift-fill"></i>
+      <span class="badge">New</span>
+      <span class="pulse"></span>
+      <span class="pulse"></span>
+    </div>
+    <div class="trophy">
+      <i class="bi bi-trophy-fill"></i>
+      <span class="pulse"></span>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Home JS -->
+  <script src="home.js"></script>
+  <!-- Bottom Navigation JS -->
+  <script src="bottom-nav.js"></script>
+
+
+<script>
+  function goTo(page) {
+    window.location.href = page;
+  }
+</script>
+
+</body>
+</html

@@ -1,0 +1,286 @@
+/* Game Accounts Page Styles - Blue Theme */
+
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #0e2340 0%, #1e3a8a 50%, #1e40af 100%);
+  color: #fff;
+  overflow-x: hidden;
+}
+
+/* Top Navbar */
+.topbar {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.topbar .logo img {
+  width: 60px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.topbar .title h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Banner Section */
+.banner-section {
+  margin: 20px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.banner-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  border-radius: 15px;
+}
+
+/* Filter Buttons */
+.filter-buttons {
+  display: flex;
+  gap: 10px;
+  padding: 0 20px 20px;
+}
+
+.filter-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  background: #1e3a8a;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.filter-btn:hover {
+  background: #1e40af;
+  transform: translateY(-2px);
+}
+
+.filter-btn.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+/* Main Content */
+.main-content {
+  padding: 0 20px 120px;
+}
+
+.no-accounts-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.message-card {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  border-radius: 20px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  max-width: 400px;
+  width: 100%;
+}
+
+.message-card i {
+  font-size: 48px;
+  color: #60a5fa;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.message-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  line-height: 1.4;
+  color: #fff;
+}
+
+.message-card p {
+  font-size: 14px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+/* Bottom Action Button */
+.bottom-action {
+  position: fixed;
+  bottom: 80px;
+  left: 20px;
+  right: 20px;
+  z-index: 999;
+}
+
+.telegram-btn {
+  width: 100%;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  color: #fff;
+  border: none;
+  border-radius: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  transition: all 0.3s ease;
+}
+
+.telegram-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
+}
+
+.telegram-btn i {
+  font-size: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 12px 15px;
+  }
+  
+  .topbar .logo img {
+    width: 50px;
+    height: 35px;
+  }
+  
+  .topbar .title h1 {
+    font-size: 16px;
+  }
+  
+  .banner-section {
+    margin: 15px;
+  }
+  
+  .banner-image {
+    border-radius: 12px;
+  }
+  
+  .filter-buttons {
+    padding: 0 15px 15px;
+    gap: 8px;
+  }
+  
+  .filter-btn {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .main-content {
+    padding: 0 15px 120px;
+  }
+  
+  .message-card {
+    padding: 30px 20px;
+    margin: 0 10px;
+  }
+  
+  .message-card i {
+    font-size: 40px;
+    margin-bottom: 15px;
+  }
+  
+  .message-card h3 {
+    font-size: 15px;
+  }
+  
+  .message-card p {
+    font-size: 13px;
+  }
+  
+  .bottom-action {
+    left: 15px;
+    right: 15px;
+    bottom: 75px;
+  }
+  
+  .telegram-btn {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.loading-spinner i {
+  font-size: 32px;
+  color: #60a5fa;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner p {
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-card {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.filter-btn {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.filter-btn:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.filter-btn:nth-child(3) {
+  animation-delay: 0.2s;
+}

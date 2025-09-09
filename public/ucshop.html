@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PUBG UC Shop</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="ucshop.css">
+  <link rel="stylesheet" href="bottom-nav.css">
+</head>
+<body>
+  <!-- Top Bar -->
+  <header class="topbar">
+    <button class="icon-btn" onclick="history.back()"><i class="bi bi-arrow-left"></i></button>
+    <h1 class="title">PUBG UC Shop</h1>
+    <div class="wallet">
+      <i class="bi bi-wallet2"></i>
+      <span id="wallet-balance">0</span> ကျပ်
+    </div>
+  </header>
+
+  <!-- Banner -->
+  <section class="banner">
+    <img src="images/pubg banner.jpg" alt="PUBG Banner">
+  </section>
+
+  <!-- Items Grid -->
+  <main class="grid" id="grid">
+    <!-- 6 UC Packages -->
+    <article class="card" data-name="60 UC" data-price="3850" data-img="images/pg11.png">
+      <img src="images/pg11.png" alt="60 UC">
+      <h4>60 UC</h4>
+      <p>3,850 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="325 UC" data-price="19550" data-img="images/pg22.png">
+      <img src="images/pg22.png" alt="325 UC">
+      <h4>325 UC</h4>
+      <p>19,550 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="660 UC" data-price="38900" data-img="images/pg44.png">
+      <img src="images/pg44.png" alt="660 UC">
+      <h4>660 UC</h4>
+      <p>38,900 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="1800 UC" data-price="97650" data-img="images/pg66.png">
+      <img src="images/pg66.png" alt="1800 UC">
+      <h4>1800 UC</h4>
+      <p>97,650 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="3850 UC" data-price="194200" data-img="images/pg77.png">
+      <img src="images/pg77.png" alt="3850 UC">
+      <h4>3850 UC</h4>
+      <p>194,200 ကျပ်</p>
+    </article>
+    
+    <article class="card" data-name="8100 UC" data-price="385300" data-img="images/pg88.png">
+      <img src="images/pg88.png" alt="8100 UC">
+      <h4>8100 UC</h4>
+      <p>385,300 ကျပ်</p>
+    </article>
+  </main>
+
+  <!-- Modal -->
+  <section id="modal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" id="closeModal"><i class="bi bi-x-lg"></i></button>
+      <h3>Confirm Purchase</h3>
+      <div class="item-preview">
+        <img id="modal-img" src="" alt="">
+        <h4 id="modal-name"></h4>
+        <p>ဈေးနှုန်း: <span id="modal-price"></span> ကျပ်</p>
+        <p>လက်ကျန်ငွေ: <span id="modal-balance"></span> ကျပ်</p>
+      </div>
+
+      <div class="input-group">
+        <label><i class="bi bi-controller"></i> Game ID</label>
+        <input type="text" id="gameId" placeholder="Enter Game ID">
+      </div>
+
+      <div class="payment-method">
+        <h5>Payment Method</h5>
+        <div class="options">
+          <button class="method" data-method="wallet"><i class="bi bi-wallet2"></i> Wallet</button>
+          <button class="method" data-method="kpay"><img src="images/kpaylogo.jpg" alt="KPay"></button>
+          <button class="method" data-method="wavepay"><img src="images/wavepaylog.jpg" alt="WavePay"></button>
+        </div>
+      </div>
+
+      <div id="payment-extra"></div>
+
+      <div class="actions">
+        <button id="cancelBtn">Cancel</button>
+        <button id="confirmBtn">Confirm</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="ucshop.js"></script>
+  <script src="bottom-nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Deposit</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+
+<style> 
+ body { background: #0f0931; color:#f1f5f9; font-family:sans-serif; }
+  .card { background:#1c2255; border-radius:12px; border:none; }
+#account-info {
+  background: #212d48;     /* dark bg */
+  color: #f8fafc;          /* light text */
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #4f8ee7;
+  font-size: 14px;
+  margin-top: 8px;
+}
+#account-info p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+  .method-btn.active { 
+    border-color:#22c55e; 
+    background:#0f172a; 
+    box-shadow:0 0 8px rgba(34,197,94,0.6);
+  }
+  .form-label { 
+    margin-top:12px; 
+    font-weight:600; 
+    color:#e2e8f0;
+  }
+  .form-control {
+    background:#0f172a; 
+    color:#f8fafc; 
+    border:1px solid #475569;
+  }
+  .form-control::placeholder { color:#94a3b8; }
+  small { color:#94a3b8; }
+  .btn-submit { 
+    background:linear-gradient(90deg,#22c55e,#16a34a); 
+    border:none; 
+    color:white; 
+    font-weight:600; 
+    padding:12px; 
+    border-radius:10px;
+  }
+  .btn-submit:disabled { opacity:0.6; }
+  .btn-back { 
+    background:#334155; 
+    border:none; 
+    color:#fff; 
+    font-weight:500; 
+    padding:12px; 
+    border-radius:10px;
+  }
+</style>
+
+</head>
+<body>
+
+<div class="container py-4">
+  <h3 class="text-center mb-4">ငွေသွင်း (Deposit)</h3>
+
+  <form id="deposit-form" class="card p-3 shadow" enctype="multipart/form-data">
+    <!-- Payment Method -->
+    <label class="form-label">Select Payment Method</label>
+    <div class="d-flex gap-2 mb-3">
+      <button type="button" id="btn-kbz"  class="btn btn-outline-primary flex-fill method-btn">
+        <img src="images/kpaylogo.jpg" height="20" class="me-1"> KBZ Pay
+      </button>
+      <button type="button" id="btn-wave" class="btn btn-outline-warning flex-fill method-btn">
+        <img src="images/wavepaylog.jpg" height="20" class="me-1"> Wave Pay
+      </button>
+    </div>
+    <input type="hidden" id="method" required>
+
+    <!-- Account Info -->
+    <div id="account-info" class="mb-3 muted"></div>
+
+    <!-- Amount -->
+    <label class="form-label">Amount (ကျပ်)</label>
+    <input type="number" id="amount" class="form-control mb-1" placeholder="1000" min="1000" max="1000000" required>
+    <small class="muted">Minimum: 1,000 | Maximum: 1,000,000</small>
+
+    <!-- Remark -->
+    <label class="form-label mt-3">Remark</label>
+    <input type="text" id="remark" class="form-control" placeholder="Enter transaction reference">
+
+    <!-- Screenshot -->
+    <label class="form-label mt-3">Payment Screenshot</label>
+    <input type="file" id="screenshot" class="form-control" accept="image/*">
+
+    <!-- Buttons -->
+    <div class="d-flex gap-2 mt-4">
+      <button type="button" onclick="window.location.href='wallet.html'" class="btn btn-secondary flex-fill">
+        <i class="bi bi-arrow-left"></i> နောက်သို့
+      </button>
+      <button id="submit-btn" type="submit" class="btn btn-success flex-fill">
+        ငွေသွင်းပါ
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // ======================
+  // API base & User
+  // ======================
+  const API_BASE = window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : window.location.origin;
+
+  const USER = JSON.parse(localStorage.getItem("user"));
+  const EMAIL = USER?.email || null;
+
+  if (!EMAIL) {
+    alert("ကျေးဇူးပြု၍ လော့ဂ်အင် ဝင်ပါ။");
+    window.location.href = "login.html";
+  }
+
+  // ======================
+  // Method select helpers
+  // ======================
+  const methodInput = document.getElementById("method");
+  const accountInfo  = document.getElementById("account-info");
+  const btnKBZ  = document.getElementById("btn-kbz");
+  const btnWave = document.getElementById("btn-wave");
+
+function setMethod(method) {
+  methodInput.value = method;
+
+  if (method === "KBZ Pay") {
+    accountInfo.innerHTML = `
+      <p class="mb-1"><i class="bi bi-person"></i> Name: <strong>Ma Thitar Aye</strong></p>
+      <p class="mb-0"><i class="bi bi-phone"></i> Account: <strong>09684973551</strong></p>
+    `;
+  } else {
+    accountInfo.innerHTML = `
+      <p class="mb-1"><i class="bi bi-person"></i> Name: <strong>Ma Thitar Aye</strong></p>
+      <p class="mb-0"><i class="bi bi-phone"></i> Account: <strong>09261441851</strong></p>
+    `;
+  }
+}
+
+  btnKBZ.addEventListener("click",  () => setMethod("KBZ Pay"));
+  btnWave.addEventListener("click", () => setMethod("Wave Pay"));
+
+  // ======================
+  // Submit
+  // ======================
+  const form = document.getElementById("deposit-form");
+  const submitBtn = document.getElementById("submit-btn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const method = methodInput.value.trim();
+    const amount = Number(document.getElementById("amount").value);
+    const remark = document.getElementById("remark").value.trim();
+    const screenshotFile = document.getElementById("screenshot").files[0];
+
+    if (!method) return alert("Payment Method ကို ရွေးပါ");
+    if (!amount || amount < 1000 || amount > 1000000) {
+      return alert("Amount ကို 1,000 မှ 1,000,000 အတွင်းဖြည့်ပါ");
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Submitting...";
+
+    try {
+      // ✅ FormData သုံးပြီး screenshot file upload
+      const formData = new FormData();
+      formData.append("email", EMAIL);
+      formData.append("amount", amount);
+      formData.append("method", method);
+      formData.append("remark", remark);
+      if (screenshotFile) {
+        formData.append("screenshot", screenshotFile);
+      }
+
+      const res = await fetch(`${API_BASE}/api/deposit`, {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Deposit failed");
+
+      alert("Deposit request submitted! (Pending)");
+      window.location.href = "wallet.html";
+    } catch (err) {
+      console.error(err);
+      alert("Deposit error: " + err.message);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerText = "ငွေသွင်းပါ";
+    }
+  });
+</script>
+
+</body>
+</html>

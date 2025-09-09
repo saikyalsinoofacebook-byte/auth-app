@@ -1,0 +1,291 @@
+:root{
+  --bg:#0e2340;
+  --white:#ffffff;
+  --ink:#1a1a2e;
+  --accent:#3b82f6;
+  --accent-2:#dbeafe;
+  --accent-3:#eff6ff;
+  --accent-light:#60a5fa;
+  --accent-dark:#1d4ed8;
+  --ring:#ffffff;
+  --shadow: 0 20px 40px rgba(0,0,0,.25);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  color:var(--ink);
+  font: 16px/1.5 "Poppins", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: radial-gradient(1200px 600px at 50% -200px,#1e40af 0%, #3b82f6 60%, #1e3a8a 100%);
+}
+
+.banner-art{display:block;width:100%;height:auto}
+.wrap{
+  max-width:1200px; margin:0 auto; padding:20px;
+  display:grid; gap:20px; grid-template-columns:1fr 300px;
+}
+
+.wheel-card{
+  background:var(--white); border-radius:20px; padding:20px;
+  box-shadow:var(--shadow); display:grid; gap:20px;
+}
+
+.wheel{
+  position:relative; width:520px; height:520px; margin:0 auto;
+}
+
+.pointer{
+  position:absolute; inset:auto 0 100% 0; margin:auto;
+  width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:24px solid #1d4ed8;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));
+  transform:translateY(14px);
+}
+
+#wheelCanvas{
+  width:100%;height:100%;
+  border-radius:50%;
+  display:block;
+}
+
+.spin-btn{
+  position:absolute; inset:0; margin:auto;
+  width:140px; height:140px; border-radius:50%;
+  border:0; color:#fff; font-weight:800; letter-spacing:.5px;
+  background: radial-gradient(circle at 50% 38%, #60a5fa, #3b82f6 70%);
+  box-shadow: 0 18px 30px rgba(59,130,246,.35), inset 0 6px 18px rgba(255,255,255,.5);
+  cursor:pointer; transition: transform .08s ease;
+}
+
+.spin-btn:active{ transform: scale(.98); }
+
+.panel{
+  background: var(--accent-3);
+  border-radius: 16px;
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.state{
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.muted{
+  color: #666;
+  font-size: 12px;
+}
+
+.actions{
+  display: grid;
+  gap: 10px;
+}
+
+.btn{
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--white);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn:hover{
+  background: var(--accent-dark);
+  transform: translateY(-1px);
+}
+
+.btn.ghost{
+  background: transparent;
+  color: var(--accent);
+  border: 2px solid var(--accent);
+}
+
+.btn.ghost:hover{
+  background: var(--accent);
+  color: var(--white);
+}
+
+.history{
+  background: var(--white);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.history h3{
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.history-list{
+  display: grid;
+  gap: 8px;
+}
+
+.history-item{
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.history-item .prize{
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.history-item .status{
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.history-item .status.completed{
+  background: #d4edda;
+  color: #155724;
+}
+
+.history-item .status.pending{
+  background: #fff3cd;
+  color: #856404;
+}
+
+.modal{
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+  z-index: 1000;
+}
+
+.modal.show{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content{
+  background: var(--white);
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+
+.close{
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.close:hover{
+  color: var(--accent);
+}
+
+.modal-content h2{
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.modal-content p{
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.claim-form{
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.claim-form label{
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.claim-form input,
+.claim-form select{
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+}
+
+.claim-form input:focus,
+.claim-form select:focus{
+  border-color: var(--accent);
+}
+
+.claim-form button, #okBtn{
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--white);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.claim-form button:hover, #okBtn:hover{
+  background: var(--accent-dark);
+  transform: translateY(-1px);
+}
+
+.modal-actions{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.hidden{
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .wrap{
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  
+  .wheel{
+    width: 300px;
+    height: 300px;
+  }
+  
+  .wheel-card{
+    padding: 16px;
+  }
+  
+  .modal-content{
+    padding: 20px;
+  }
+}

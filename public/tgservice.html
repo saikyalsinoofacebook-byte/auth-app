@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telegram Services</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="tgservice.css">
+  <link rel="stylesheet" href="bottom-nav.css">
+</head>
+<body>
+  <!-- Top Bar -->
+  <header class="topbar">
+    <button class="icon-btn" onclick="history.back()"><i class="bi bi-arrow-left"></i></button>
+    <h1 class="title">Telegram Services</h1>
+    <div class="wallet">
+      <i class="bi bi-wallet2"></i>
+      <span id="wallet-balance">0</span> ကျပ်
+    </div>
+  </header>
+
+  <!-- Banner -->
+  <section class="banner">
+    <img src="images/telegramlogo.jpg" alt="Telegram Services Banner">
+  </section>
+
+  <!-- Items Grid -->
+  <main class="grid" id="grid">
+    <!-- Telegram Premium Plans -->
+    <article class="card premium" data-name="3 Months Premium" data-price="55000" data-img="images/telegramlogo.jpg">
+      <span class="badge gift">Gift Plan</span>
+      <img src="images/telegramlogo.jpg" alt="3 Months Premium">
+      <h4>3 Months Premium</h4>
+      <p>55,000 ကျပ်</p>
+    </article>
+    
+    <article class="card premium" data-name="6 Months Premium" data-price="75000" data-img="images/telegramlogo.jpg">
+      <span class="badge gift">Gift Plan</span>
+      <img src="images/telegramlogo.jpg" alt="6 Months Premium">
+      <h4>6 Months Premium</h4>
+      <p>75,000 ကျပ်</p>
+    </article>
+    
+    <article class="card premium" data-name="12 Months Premium" data-price="130000" data-img="images/telegramlogo.jpg">
+      <span class="badge gift">Gift Plan</span>
+      <img src="images/telegramlogo.jpg" alt="12 Months Premium">
+      <h4>12 Months Premium</h4>
+      <p>130,000 ကျပ်</p>
+    </article>
+    
+    <!-- Stars Packages -->
+    <article class="card stars" data-name="50 Stars" data-price="3800" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="50 Stars">
+      <h4>50 Stars</h4>
+      <p>3,800 ကျပ်</p>
+    </article>
+    
+    <article class="card stars" data-name="100 Stars" data-price="7600" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="100 Stars">
+      <h4>100 Stars</h4>
+      <p>7,600 ကျပ်</p>
+    </article>
+    
+    <article class="card stars" data-name="300 Stars" data-price="22800" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="300 Stars">
+      <h4>300 Stars</h4>
+      <p>22,800 ကျပ်</p>
+    </article>
+    
+    <article class="card stars" data-name="500 Stars" data-price="38000" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="500 Stars">
+      <h4>500 Stars</h4>
+      <p>38,000 ကျပ်</p>
+    </article>
+    
+    <article class="card stars" data-name="1000 Stars" data-price="76000" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="1000 Stars">
+      <h4>1000 Stars</h4>
+      <p>76,000 ကျပ်</p>
+    </article>
+    
+    <article class="card stars" data-name="1500 Stars" data-price="114000" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="1500 Stars">
+      <h4>1500 Stars</h4>
+      <p>114,000 ကျပ်</p>
+    </article>
+    
+    <article class="card stars" data-name="3000 Stars" data-price="228000" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="3000 Stars">
+      <h4>3000 Stars</h4>
+      <p>228,000 ကျပ်</p>
+    </article>
+    
+    <article class="card stars" data-name="5000 Stars" data-price="380000" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="5000 Stars">
+      <h4>5000 Stars</h4>
+      <p>380,000 ကျပ်</p>
+    </article>
+    
+    <article class="card stars" data-name="10000 Stars" data-price="760000" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="10000 Stars">
+      <h4>10000 Stars</h4>
+      <p>760,000 ကျပ်</p>
+    </article>
+    
+    <article class="card stars" data-name="15000 Stars" data-price="1140000" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="15000 Stars">
+      <h4>15000 Stars</h4>
+      <p>1,140,000 ကျပ်</p>
+    </article>
+    
+    <article class="card stars" data-name="20000 Stars" data-price="1520000" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="20000 Stars">
+      <h4>20000 Stars</h4>
+      <p>1,520,000 ကျပ်</p>
+    </article>
+    
+    <article class="card stars" data-name="50000 Stars" data-price="3800000" data-img="images/telegramlogo.jpg">
+      <img src="images/telegramlogo.jpg" alt="50000 Stars">
+      <h4>50000 Stars</h4>
+      <p>3,800,000 ကျပ်</p>
+    </article>
+  </main>
+
+  <!-- Modal -->
+  <section id="modal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" id="closeModal"><i class="bi bi-x-lg"></i></button>
+      <h3>Confirm Purchase</h3>
+      <div class="item-preview">
+        <img id="modal-img" src="" alt="">
+        <h4 id="modal-name"></h4>
+        <p>ဈေးနှုန်း: <span id="modal-price"></span> ကျပ်</p>
+        <p>လက်ကျန်ငွေ: <span id="modal-balance"></span> ကျပ်</p>
+      </div>
+
+      <div class="input-group">
+        <label><i class="bi bi-telegram"></i> Telegram Username</label>
+        <input type="text" id="telegramUsername" placeholder="Enter @username">
+      </div>
+
+      <div class="payment-method">
+        <h5>Payment Method</h5>
+        <div class="options">
+          <button class="method" data-method="wallet"><i class="bi bi-wallet2"></i> Wallet</button>
+          <button class="method" data-method="kpay"><img src="images/kpaylogo.jpg" alt="KPay"></button>
+          <button class="method" data-method="wavepay"><img src="images/wavepaylog.jpg" alt="WavePay"></button>
+        </div>
+      </div>
+
+      <div id="payment-extra"></div>
+
+      <div class="actions">
+        <button id="cancelBtn">Cancel</button>
+        <button id="confirmBtn">Confirm</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="tgservice.js"></script>
+  <script src="bottom-nav.js"></script>
+</body>
+</html>

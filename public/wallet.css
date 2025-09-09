@@ -1,0 +1,170 @@
+/* ================== Base ================== */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #0a0d2d;
+  color: #fff;
+  font-family: "Poppins", sans-serif;
+  overflow-y: auto;   /* ✅ Scroll enable */
+}
+
+/* Heading & Subtitle */
+h2,
+h3 {
+  text-align: center;
+  margin: 8px 0;
+  font-size: 16px;
+
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 10px;
+}
+
+/* ========== Header ========== */
+.wallet-header {
+  text-align: center;
+  padding: 8px;
+  background: #0f1335;
+}
+.wallet-header .logo {
+  height: 35px;
+}
+
+/* ========== Balance Card ========== */
+.balance-card {
+  background: #1c2255;
+  margin: 12px auto;
+  padding: 12px;
+  border-radius: 10px;
+  width: 92%;
+  text-align: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+.balance-main {
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+.balance-main .icon {
+  font-size: 20px;
+}
+.balance-sub {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 6px;
+  font-size: 12px;
+}
+.balance-sub .available {
+  color: #00ff88;
+}
+.balance-sub .onhold {
+  color: #ff6600;
+}
+
+/* ========== Action Buttons ========== */
+.action-buttons {
+  display: flex;
+  justify-content: space-around;
+  margin: 15px;
+}
+.action-buttons button {
+  flex: 1;
+  margin: 0 6px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.deposit {
+  background: #3b82f6;
+  color: white;
+}
+.deposit:hover {
+  background: #2563eb;
+}
+.withdraw {
+  background: #f97316;
+  color: white;
+}
+.withdraw:hover {
+  background: #ea580c;
+}
+
+/* ========== Transaction History ========== */
+.txn-list {
+  margin: 12px auto 70px; /* bottom spacing for navbar */
+  width: 92%;
+}
+.txn-card {
+  background: #1c2255;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+.txn-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.txn-left .icon {
+  font-size: 18px;
+  color: #3b82f6;
+}
+.txn-left small {
+  font-size: 11px;
+  color: #aaa;
+}
+.txn-status {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ✅ Transaction Status Colors */
+.status-completed,
+.status-complete,
+.status-Completed {
+  color: #22c55e; /* အစိမ်း */
+}
+.status-pending {
+  color: #facc15; /* အဝါ */
+}
+.status-cancelled {
+  color: #ef4444; /* အနီ */
+}
+
+.txn-right {
+  font-size: 14px;
+  font-weight: bold;
+}
+.txn-right.positive {
+  color: #22c55e;
+}
+.txn-right.negative {
+  color: #ef4444;
+}
+.no-txn {
+  text-align: center;
+  font-size: 13px;
+  color: #aaa;
+}
+
+/* ========== Bottom Navbar styles moved to bottom-nav.css ========== */
