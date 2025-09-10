@@ -282,7 +282,23 @@ body{
   transition: all 0.3s ease;
 }
 
+.gift-item-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  transition: all 0.3s ease;
+  border-radius: 16px;
+}
+
 .gift-item:hover .gift-item-icon {
+  transform: scale(1.1);
+}
+
+.gift-item:hover .gift-item-image {
   transform: scale(1.1);
 }
 
@@ -328,6 +344,10 @@ body{
   animation: moneyPulse 2s ease-in-out infinite;
 }
 
+.money-prize .gift-item-image {
+  animation: moneyPulse 2s ease-in-out infinite;
+}
+
 .money-prize .gift-badge {
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
@@ -345,6 +365,10 @@ body{
   animation: diamondSparkle 1.5s ease-in-out infinite;
 }
 
+.diamond-prize .gift-item-image {
+  animation: diamondSparkle 1.5s ease-in-out infinite;
+}
+
 .diamond-prize .gift-badge {
   background: linear-gradient(135deg, #06b6d4, #0891b2);
   color: white;
@@ -359,6 +383,10 @@ body{
 
 .uc-prize .gift-item-icon {
   color: white;
+  animation: ucPulse 2.5s ease-in-out infinite;
+}
+
+.uc-prize .gift-item-image {
   animation: ucPulse 2.5s ease-in-out infinite;
 }
 
@@ -392,6 +420,12 @@ body{
   animation: phoneBounce 2s ease-in-out infinite;
   position: relative;
   z-index: 2;
+}
+
+.phone-prize .gift-item-image {
+  animation: phoneBounce 2s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
 }
 
 .phone-prize .gift-badge {
@@ -558,6 +592,10 @@ body{
 }
 
 .phone-prize:hover .gift-item-icon {
+  animation: phoneBounce 0.5s ease-in-out infinite;
+}
+
+.phone-prize:hover .gift-item-image {
   animation: phoneBounce 0.5s ease-in-out infinite;
 }
 

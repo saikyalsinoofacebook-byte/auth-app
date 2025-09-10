@@ -336,6 +336,7 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="admin.js"></script>
     <script>
         // Check authentication before loading admin panel
         document.addEventListener('DOMContentLoaded', function() {
@@ -357,21 +358,16 @@
                     window.location.href = 'login.html';
                     return;
                 }
-                // Token is valid, load admin panel
-                loadAdminScript();
+                // Token is valid, admin panel should be working
+                console.log('Admin authenticated successfully');
             })
             .catch(error => {
                 // Network error, redirect to login
+                console.error('Authentication error:', error);
                 localStorage.removeItem('adminToken');
                 window.location.href = 'login.html';
             });
         });
-        
-        function loadAdminScript() {
-            const script = document.createElement('script');
-            script.src = 'admin.js';
-            document.head.appendChild(script);
-        }
     </script>
 </body>
 </html>

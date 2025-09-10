@@ -12,7 +12,7 @@ let adminData = {
 };
 
 // Initialize admin panel
-document.addEventListener('DOMContentLoaded', function() {
+function initializeAdminPanel() {
     // Check admin authentication
     checkAdminAuth();
     
@@ -27,7 +27,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load dashboard data
     loadDashboard();
-});
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeAdminPanel);
+} else {
+    initializeAdminPanel();
+}
 
 // Check admin authentication
 function checkAdminAuth() {
@@ -37,8 +44,8 @@ function checkAdminAuth() {
         window.location.href = 'login.html';
         return;
     }
-    // Verify token with server
-    verifyAdminToken(adminToken);
+    // Token exists, continue with initialization
+    console.log('Admin token found, initializing panel');
 }
 
 // Verify admin token
@@ -62,10 +69,16 @@ async function verifyAdminToken(token) {
 
 // Setup event listeners
 function setupEventListeners() {
+    console.log('Setting up event listeners...');
+    
     // Sidebar menu items
-    document.querySelectorAll('.menu-item').forEach(item => {
+    const menuItems = document.querySelectorAll('.menu-item');
+    console.log('Found menu items:', menuItems.length);
+    
+    menuItems.forEach((item, index) => {
         item.addEventListener('click', function() {
             const page = this.dataset.page;
+            console.log('Menu item clicked:', page);
             switchPage(page);
         });
     });
@@ -80,44 +93,66 @@ function setupEventListeners() {
     if (transactionFilter) {
         transactionFilter.addEventListener('change', () => refreshTransactions());
     }
+    
+    console.log('Event listeners setup complete');
 }
 
 // Switch page
 function switchPage(page) {
+    console.log('Switching to page:', page);
+    
     // Update active menu item
     document.querySelectorAll('.menu-item').forEach(item => {
         item.classList.remove('active');
     });
-    document.querySelector(`[data-page="${page}"]`).classList.add('active');
+    const activeMenuItem = document.querySelector(`[data-page="${page}"]`);
+    if (activeMenuItem) {
+        activeMenuItem.classList.add('active');
+    } else {
+        console.error('Menu item not found for page:', page);
+    }
     
     // Show page content
     document.querySelectorAll('.page-content').forEach(content => {
         content.classList.remove('active');
     });
-    document.getElementById(`${page}-page`).classList.add('active');
+    const pageContent = document.getElementById(`${page}-page`);
+    if (pageContent) {
+        pageContent.classList.add('active');
+    } else {
+        console.error('Page content not found for:', page);
+    }
     
     currentPage = page;
     
     // Load page data
     switch(page) {
         case 'dashboard':
+            console.log('Loading dashboard...');
             loadDashboard();
             break;
         case 'users':
+            console.log('Loading users...');
             loadUsers();
             break;
         case 'orders':
+            console.log('Loading orders...');
             loadOrders();
             break;
         case 'transactions':
+            console.log('Loading transactions...');
             loadTransactions();
             break;
-        case 'wallet':
+        case 'wallets':
+            console.log('Loading wallets...');
             loadWallets();
             break;
         case 'gifts':
+            console.log('Loading gifts...');
             loadGifts();
             break;
+        default:
+            console.error('Unknown page:', page);
     }
 }
 
@@ -222,21 +257,33 @@ function getActivityDescription(activity) {
 
 // Load users
 async function loadUsers() {
+    console.log('Loading users...');
     const tbody = document.getElementById('users-table');
+    if (!tbody) {
+        console.error('Users table not found');
+        return;
+    }
+    
     tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="loading"></div> Loading users...</td></tr>';
     
     try {
+        const adminToken = localStorage.getItem('adminToken');
+        console.log('Admin token:', adminToken ? 'Found' : 'Not found');
+        
         const response = await fetch(`${API_BASE}/api/admin/users`, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                'Authorization': `Bearer ${adminToken}`
             }
         });
+        
+        console.log('Response status:', response.status);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const users = await response.json();
+        console.log('Users loaded:', users.length);
         adminData.users = users;
         
         tbody.innerHTML = '';
@@ -276,6 +323,12 @@ async function loadUsers() {
     } catch (error) {
         console.error('Users load error:', error);
         tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading users: ' + error.message + '</td></tr>';
+        
+        // If it's an authentication error, redirect to login
+        if (error.message.includes('401') || error.message.includes('403')) {
+            localStorage.removeItem('adminToken');
+            window.location.href = 'login.html';
+        }
     }
 }
 
