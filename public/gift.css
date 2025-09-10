@@ -320,57 +320,85 @@ body{
 .money-prize .gift-icon-wrapper {
   background: linear-gradient(135deg, #10b981, #059669);
   box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+  animation: moneyGlow 3s ease-in-out infinite;
 }
 
 .money-prize .gift-item-icon {
   color: white;
+  animation: moneyPulse 2s ease-in-out infinite;
 }
 
 .money-prize .gift-badge {
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
+  animation: badgeShine 2s ease-in-out infinite;
 }
 
-.game-item .gift-icon-wrapper {
+.diamond-prize .gift-icon-wrapper {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  box-shadow: 0 8px 20px rgba(6, 182, 212, 0.3);
+  animation: diamondGlow 4s ease-in-out infinite;
+}
+
+.diamond-prize .gift-item-icon {
+  color: white;
+  animation: diamondSparkle 1.5s ease-in-out infinite;
+}
+
+.diamond-prize .gift-badge {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+  animation: badgeShine 2s ease-in-out infinite;
+}
+
+.uc-prize .gift-icon-wrapper {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  animation: ucGlow 3.5s ease-in-out infinite;
 }
 
-.game-item .gift-item-icon {
+.uc-prize .gift-item-icon {
   color: white;
+  animation: ucPulse 2.5s ease-in-out infinite;
 }
 
-.game-item .gift-badge {
+.uc-prize .gift-badge {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
+  animation: badgeShine 2s ease-in-out infinite;
 }
 
-.token-prize .gift-icon-wrapper {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+.phone-prize .gift-icon-wrapper {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed, #ec4899);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+  animation: phoneGlow 5s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
 }
 
-.token-prize .gift-item-icon {
+.phone-prize .gift-icon-wrapper::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: phoneShine 3s ease-in-out infinite;
+}
+
+.phone-prize .gift-item-icon {
   color: white;
+  animation: phoneBounce 2s ease-in-out infinite;
+  position: relative;
+  z-index: 2;
 }
 
-.token-prize .gift-badge {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+.phone-prize .gift-badge {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed, #ec4899);
   color: white;
-}
-
-.special-prize .gift-icon-wrapper {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
-}
-
-.special-prize .gift-item-icon {
-  color: white;
-}
-
-.special-prize .gift-badge {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  color: white;
+  animation: ultraRareGlow 1.5s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
 }
 
 /* Hover Effects for Each Type */
@@ -393,6 +421,153 @@ body{
   box-shadow: 0 12px 30px rgba(139, 92, 246, 0.4);
   transform: scale(1.05);
 }
+
+/* Premium Animations for Each Prize Type */
+@keyframes moneyGlow {
+  0%, 100% { 
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+  }
+  50% { 
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5), 0 0 15px rgba(16, 185, 129, 0.3);
+  }
+}
+
+@keyframes moneyPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes diamondGlow {
+  0%, 100% { 
+    box-shadow: 0 8px 20px rgba(6, 182, 212, 0.3);
+  }
+  50% { 
+    box-shadow: 0 8px 25px rgba(6, 182, 212, 0.5), 0 0 20px rgba(6, 182, 212, 0.4);
+  }
+}
+
+@keyframes diamondSparkle {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+  25% { 
+    transform: scale(1.1) rotate(5deg);
+    filter: brightness(1.2);
+  }
+  50% { 
+    transform: scale(1.05) rotate(-5deg);
+    filter: brightness(1.3);
+  }
+  75% { 
+    transform: scale(1.1) rotate(3deg);
+    filter: brightness(1.1);
+  }
+}
+
+@keyframes ucGlow {
+  0%, 100% { 
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  }
+  50% { 
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5), 0 0 15px rgba(59, 130, 246, 0.3);
+  }
+}
+
+@keyframes ucPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes phoneGlow {
+  0%, 100% { 
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+  }
+  25% { 
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6), 0 0 20px rgba(139, 92, 246, 0.4);
+  }
+  50% { 
+    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.7), 0 0 25px rgba(139, 92, 246, 0.5), 0 0 35px rgba(236, 72, 153, 0.3);
+  }
+  75% { 
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6), 0 0 20px rgba(139, 92, 246, 0.4);
+  }
+}
+
+@keyframes phoneBounce {
+  0%, 100% { 
+    transform: translateY(0) scale(1);
+  }
+  25% { 
+    transform: translateY(-3px) scale(1.05);
+  }
+  50% { 
+    transform: translateY(-5px) scale(1.1);
+  }
+  75% { 
+    transform: translateY(-2px) scale(1.05);
+  }
+}
+
+@keyframes phoneShine {
+  0% { 
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  50% { 
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+  100% { 
+    transform: translateX(200%) translateY(200%) rotate(45deg);
+  }
+}
+
+@keyframes badgeShine {
+  0%, 100% { 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  50% { 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes ultraRareGlow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.8), 0 0 40px rgba(236, 72, 153, 0.4);
+    transform: scale(1.05);
+  }
+}
+
+/* Enhanced Hover Effects */
+.diamond-prize:hover .gift-icon-wrapper {
+  box-shadow: 0 12px 30px rgba(6, 182, 212, 0.4);
+  transform: scale(1.05);
+}
+
+.uc-prize:hover .gift-icon-wrapper {
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+  transform: scale(1.05);
+}
+
+.phone-prize:hover .gift-icon-wrapper {
+  box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6), 0 0 30px rgba(236, 72, 153, 0.4);
+  transform: scale(1.08);
+}
+
+.phone-prize:hover .gift-item-icon {
+  animation: phoneBounce 0.5s ease-in-out infinite;
+}
+
+/* Staggered Animation for Gift Items */
+.gift-item:nth-child(1) { animation-delay: 0.1s; }
+.gift-item:nth-child(2) { animation-delay: 0.2s; }
+.gift-item:nth-child(3) { animation-delay: 0.3s; }
+.gift-item:nth-child(4) { animation-delay: 0.4s; }
+.gift-item:nth-child(5) { animation-delay: 0.5s; }
+.gift-item:nth-child(6) { animation-delay: 0.6s; }
 .wrap{
   max-width:1200px; margin:0 auto; padding:20px 20px 60px 20px;
   display:grid; gap:20px; grid-template-columns:1fr 300px;
