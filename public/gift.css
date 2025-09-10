@@ -21,7 +21,26 @@ body{
   overflow-x: hidden;
 }
 
-.banner-art{display:block;width:100%;height:auto}
+.banner-art{
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+.gift-banner{
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gift-banner:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+}
 .wrap{
   max-width:1200px; margin:0 auto; padding:20px 20px 60px 20px;
   display:grid; gap:20px; grid-template-columns:1fr 300px;
@@ -301,6 +320,14 @@ body{
 }
 
 @media (max-width: 768px) {
+  .banner-art{
+    margin-bottom: 16px;
+  }
+  
+  .gift-banner{
+    border-radius: 12px;
+  }
+  
   .wrap{
     grid-template-columns: 1fr;
     padding: 16px;

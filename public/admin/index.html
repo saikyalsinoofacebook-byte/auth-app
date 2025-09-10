@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Arthur Game Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <!-- Admin Header -->
+    <nav class="admin-navbar">
+        <div class="container-fluid">
+            <div class="navbar-brand">
+                <i class="bi bi-shield-check"></i>
+                <span>Admin Panel</span>
+            </div>
+            <div class="navbar-actions">
+                <button class="btn btn-outline-light" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <h5><i class="bi bi-person-circle"></i> Admin Dashboard</h5>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-page="dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" data-page="users">
+                    <i class="bi bi-people"></i>
+                    <span>Users</span>
+                </li>
+                <li class="menu-item" data-page="orders">
+                    <i class="bi bi-bag"></i>
+                    <span>Orders</span>
+                </li>
+                <li class="menu-item" data-page="transactions">
+                    <i class="bi bi-credit-card"></i>
+                    <span>Transactions</span>
+                </li>
+                <li class="menu-item" data-page="wallet">
+                    <i class="bi bi-wallet2"></i>
+                    <span>Wallet Management</span>
+                </li>
+                <li class="menu-item" data-page="gifts">
+                    <i class="bi bi-gift"></i>
+                    <span>Gift System</span>
+                </li>
+                <li class="menu-item" data-page="settings">
+                    <i class="bi bi-gear"></i>
+                    <span>Settings</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="admin-main">
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page-content active">
+                <div class="page-header">
+                    <h2><i class="bi bi-speedometer2"></i> Dashboard Overview</h2>
+                    <p>Welcome to Arthur Game Shop Admin Panel</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-users">0</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-bag"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-orders">0</h3>
+                            <p>Total Orders</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-credit-card"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-revenue">0</h3>
+                            <p>Total Revenue</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="pending-orders">0</h3>
+                            <p>Pending Orders</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="dashboard-section">
+                    <h4><i class="bi bi-clock-history"></i> Recent Activity</h4>
+                    <div class="activity-list" id="recent-activity">
+                        <!-- Activity items will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Page -->
+            <div id="users-page" class="page-content">
+                <div class="page-header">
+                    <h2><i class="bi bi-people"></i> User Management</h2>
+                    <button class="btn btn-primary" onclick="refreshUsers()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Balance</th>
+                                <th>Tokens</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table">
+                            <!-- Users will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Orders Page -->
+            <div id="orders-page" class="page-content">
+                <div class="page-header">
+                    <h2><i class="bi bi-bag"></i> Order Management</h2>
+                    <div class="header-actions">
+                        <select class="form-select" id="order-status-filter">
+                            <option value="">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="refreshOrders()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>User</th>
+                                <th>Item</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table">
+                            <!-- Orders will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Transactions Page -->
+            <div id="transactions-page" class="page-content">
+                <div class="page-header">
+                    <h2><i class="bi bi-credit-card"></i> Transaction Management</h2>
+                    <div class="header-actions">
+                        <select class="form-select" id="transaction-type-filter">
+                            <option value="">All Types</option>
+                            <option value="deposit">Deposit</option>
+                            <option value="withdraw">Withdraw</option>
+                            <option value="order">Order</option>
+                            <option value="gift">Gift</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="refreshTransactions()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-table">
+                            <!-- Transactions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Wallet Management Page -->
+            <div id="wallet-page" class="page-content">
+                <div class="page-header">
+                    <h2><i class="bi bi-wallet2"></i> Wallet Management</h2>
+                    <button class="btn btn-primary" onclick="refreshWallets()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>User Email</th>
+                                <th>Balance</th>
+                                <th>Available</th>
+                                <th>On Hold</th>
+                                <th>Tokens</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wallets-table">
+                            <!-- Wallets will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Gift System Page -->
+            <div id="gifts-page" class="page-content">
+                <div class="page-header">
+                    <h2><i class="bi bi-gift"></i> Gift System Management</h2>
+                    <button class="btn btn-primary" onclick="refreshGifts()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="gift-stats">
+                    <div class="stat-card">
+                        <h4>Total Spins Today</h4>
+                        <h2 id="total-spins">0</h2>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Total Tokens Used</h4>
+                        <h2 id="total-tokens-used">0</h2>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>User Email</th>
+                                <th>Prize</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gifts-table">
+                            <!-- Gift transactions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings-page" class="page-content">
+                <div class="page-header">
+                    <h2><i class="bi bi-gear"></i> System Settings</h2>
+                </div>
+                <div class="settings-section">
+                    <h4>Gift System Settings</h4>
+                    <div class="form-group">
+                        <label>Free Token Interval (hours)</label>
+                        <input type="number" class="form-control" id="free-token-interval" value="24">
+                    </div>
+                    <div class="form-group">
+                        <label>Token Price (Ks)</label>
+                        <input type="number" class="form-control" id="token-price" value="500">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal fade" id="actionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Action</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Dynamic content -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="modalConfirm">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

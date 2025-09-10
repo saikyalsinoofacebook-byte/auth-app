@@ -66,6 +66,10 @@ async function withClient(fn) {
 
 app.get("/", (req, res) => res.send("API running"));
 
+// Admin routes
+app.get("/admin", (req, res) => res.redirect("/admin/login.html"));
+app.get("/admin/", (req, res) => res.redirect("/admin/login.html"));
+
 // Register
 app.post("/api/register", async (req, res) => {
   const { name, email, password } = req.body;
@@ -922,8 +926,8 @@ router.post("/api/gift/claim-free-token", async (req, res) => {
 
 // Simple admin authentication (in production, use proper JWT)
 const ADMIN_CREDENTIALS = {
-  username: process.env.ADMIN_USERNAME || "admin",
-  password: process.env.ADMIN_PASSWORD || "admin123"
+  username: process.env.ADMIN_USERNAME || "admin@admin.xyz1#",
+  password: process.env.ADMIN_PASSWORD || "@@admin.221233"
 };
 
 // Admin login
