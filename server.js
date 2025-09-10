@@ -69,6 +69,7 @@ app.get("/", (req, res) => res.send("API running"));
 // Admin routes
 app.get("/admin", (req, res) => res.redirect("/admin/login.html"));
 app.get("/admin/", (req, res) => res.redirect("/admin/login.html"));
+app.get("/admin/index.html", (req, res) => res.redirect("/admin/login.html"));
 
 // Register
 app.post("/api/register", async (req, res) => {
@@ -1009,6 +1010,33 @@ router.put("/api/admin/users/:id", async (req, res) => {
   }
 });
 
+// Delete user
+router.delete("/api/admin/users/:id", async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    // Get user email first
+    const userResult = await pool.query("SELECT email FROM users WHERE id = $1", [id]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    const userEmail = userResult.rows[0].email;
+    
+    // Delete from all related tables (CASCADE should handle this, but being explicit)
+    await pool.query("DELETE FROM transactions WHERE user_email = $1", [userEmail]);
+    await pool.query("DELETE FROM wallets WHERE user_email = $1", [userEmail]);
+    await pool.query("DELETE FROM orders WHERE user_email = $1", [userEmail]);
+    await pool.query("DELETE FROM gift_tokens WHERE user_email = $1", [userEmail]);
+    await pool.query("DELETE FROM users WHERE id = $1", [id]);
+    
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    console.error("Delete user error:", err);
+    res.status(500).json({ error: "Delete failed" });
+  }
+});
+
 // Get all orders
 router.get("/api/admin/orders", async (req, res) => {
   try {
@@ -1028,15 +1056,26 @@ router.get("/api/admin/orders", async (req, res) => {
 // Update order status
 router.put("/api/admin/orders/:orderId", async (req, res) => {
   const { orderId } = req.params;
-  const { status } = req.body;
+  const { status, price, gameId, serverId } = req.body;
   
   try {
-    await pool.query(
-      "UPDATE orders SET status = $1 WHERE order_id = $2",
-      [status, orderId]
-    );
+    if (status) {
+      await pool.query("UPDATE orders SET status = $1 WHERE order_id = $2", [status, orderId]);
+    }
     
-    res.json({ message: "Order status updated" });
+    if (price !== undefined) {
+      await pool.query("UPDATE orders SET price = $1 WHERE order_id = $2", [price, orderId]);
+    }
+    
+    if (gameId) {
+      await pool.query("UPDATE orders SET game_id = $1 WHERE order_id = $2", [gameId, orderId]);
+    }
+    
+    if (serverId) {
+      await pool.query("UPDATE orders SET server_id = $1 WHERE order_id = $2", [serverId, orderId]);
+    }
+    
+    res.json({ message: "Order updated successfully" });
   } catch (err) {
     console.error("Update order error:", err);
     res.status(500).json({ error: "Failed to update order" });
@@ -1062,15 +1101,30 @@ router.get("/api/admin/transactions", async (req, res) => {
 // Update transaction status
 router.put("/api/admin/transactions/:id", async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, amount, type, method, remark } = req.body;
   
   try {
-    await pool.query(
-      "UPDATE transactions SET status = $1 WHERE id = $2",
-      [status, id]
-    );
+    if (status) {
+      await pool.query("UPDATE transactions SET status = $1 WHERE id = $2", [status, id]);
+    }
     
-    res.json({ message: "Transaction status updated" });
+    if (amount !== undefined) {
+      await pool.query("UPDATE transactions SET amount = $1 WHERE id = $2", [amount, id]);
+    }
+    
+    if (type) {
+      await pool.query("UPDATE transactions SET type = $1 WHERE id = $2", [type, id]);
+    }
+    
+    if (method) {
+      await pool.query("UPDATE transactions SET method = $1 WHERE id = $2", [method, id]);
+    }
+    
+    if (remark !== undefined) {
+      await pool.query("UPDATE transactions SET remark = $1 WHERE id = $2", [remark, id]);
+    }
+    
+    res.json({ message: "Transaction updated successfully" });
   } catch (err) {
     console.error("Update transaction error:", err);
     res.status(500).json({ error: "Failed to update transaction" });
@@ -1090,6 +1144,99 @@ router.get("/api/admin/wallets", async (req, res) => {
   } catch (err) {
     console.error("Admin wallets error:", err);
     res.status(500).json({ error: "Failed to fetch wallets" });
+  }
+});
+
+// Update wallet
+router.put("/api/admin/wallets/:userEmail", async (req, res) => {
+  const { userEmail } = req.params;
+  const { balance, onhold, tokens } = req.body;
+  
+  try {
+    if (balance !== undefined) {
+      await pool.query("UPDATE wallets SET balance = $1 WHERE user_email = $2", [balance, userEmail]);
+    }
+    
+    if (onhold !== undefined) {
+      await pool.query("UPDATE wallets SET onhold = $1 WHERE user_email = $2", [onhold, userEmail]);
+    }
+    
+    if (tokens !== undefined) {
+      await pool.query("UPDATE wallets SET tokens = $1 WHERE user_email = $2", [tokens, userEmail]);
+    }
+    
+    res.json({ message: "Wallet updated successfully" });
+  } catch (err) {
+    console.error("Update wallet error:", err);
+    res.status(500).json({ error: "Failed to update wallet" });
+  }
+});
+
+// Add funds to wallet
+router.post("/api/admin/wallets/:userEmail/add-funds", async (req, res) => {
+  const { userEmail } = req.params;
+  const { amount, reason, notes } = req.body;
+  
+  try {
+    // Get current balance
+    const walletResult = await pool.query("SELECT balance FROM wallets WHERE user_email = $1", [userEmail]);
+    if (walletResult.rows.length === 0) {
+      return res.status(404).json({ error: "Wallet not found" });
+    }
+    
+    const currentBalance = walletResult.rows[0].balance || 0;
+    const newBalance = currentBalance + parseFloat(amount);
+    
+    // Update wallet balance
+    await pool.query("UPDATE wallets SET balance = $1 WHERE user_email = $2", [newBalance, userEmail]);
+    
+    // Create transaction record
+    await pool.query(`
+      INSERT INTO transactions (user_id, user_email, amount, type, status, method, remark, created_at)
+      VALUES (
+        (SELECT id FROM users WHERE email = $1),
+        $1, $2, 'deposit', 'Completed', 'admin_adjustment', $3, CURRENT_TIMESTAMP
+      )
+    `, [userEmail, amount, `Admin added funds: ${reason}. ${notes || ''}`]);
+    
+    res.json({ message: "Funds added successfully" });
+  } catch (err) {
+    console.error("Add funds error:", err);
+    res.status(500).json({ error: "Failed to add funds" });
+  }
+});
+
+// Add tokens to wallet
+router.post("/api/admin/wallets/:userEmail/add-tokens", async (req, res) => {
+  const { userEmail } = req.params;
+  const { amount, reason, notes } = req.body;
+  
+  try {
+    // Get current tokens
+    const walletResult = await pool.query("SELECT tokens FROM wallets WHERE user_email = $1", [userEmail]);
+    if (walletResult.rows.length === 0) {
+      return res.status(404).json({ error: "Wallet not found" });
+    }
+    
+    const currentTokens = walletResult.rows[0].tokens || 0;
+    const newTokens = currentTokens + parseInt(amount);
+    
+    // Update wallet tokens
+    await pool.query("UPDATE wallets SET tokens = $1 WHERE user_email = $2", [newTokens, userEmail]);
+    
+    // Create transaction record
+    await pool.query(`
+      INSERT INTO transactions (user_id, user_email, amount, type, status, method, remark, created_at)
+      VALUES (
+        (SELECT id FROM users WHERE email = $1),
+        $1, 0, 'gift-token', 'Completed', 'admin_gift', $3, CURRENT_TIMESTAMP
+      )
+    `, [userEmail, `Admin added ${amount} tokens: ${reason}. ${notes || ''}`]);
+    
+    res.json({ message: "Tokens added successfully" });
+  } catch (err) {
+    console.error("Add tokens error:", err);
+    res.status(500).json({ error: "Failed to add tokens" });
   }
 });
 
