@@ -916,6 +916,213 @@ router.post("/api/gift/claim-free-token", async (req, res) => {
   }
 });
 
+// ======================
+// ADMIN ROUTES
+// ======================
+
+// Simple admin authentication (in production, use proper JWT)
+const ADMIN_CREDENTIALS = {
+  username: process.env.ADMIN_USERNAME || "admin",
+  password: process.env.ADMIN_PASSWORD || "admin123"
+};
+
+// Admin login
+router.post("/api/admin/login", async (req, res) => {
+  const { username, password } = req.body;
+  
+  if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+    // Simple token (in production, use JWT)
+    const token = Buffer.from(`${username}:${Date.now()}`).toString('base64');
+    res.json({ token, message: "Admin login successful" });
+  } else {
+    res.status(401).json({ error: "Invalid admin credentials" });
+  }
+});
+
+// Verify admin token
+router.get("/api/admin/verify", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+  
+  const token = authHeader.substring(7);
+  try {
+    const decoded = Buffer.from(token, 'base64').toString('ascii');
+    const [username, timestamp] = decoded.split(':');
+    
+    if (username === ADMIN_CREDENTIALS.username) {
+      res.json({ valid: true });
+    } else {
+      res.status(401).json({ error: "Invalid token" });
+    }
+  } catch (error) {
+    res.status(401).json({ error: "Invalid token" });
+  }
+});
+
+// Get all users
+router.get("/api/admin/users", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT u.id, u.name, u.username, u.email, u.created_at, 
+             w.balance, w.tokens
+      FROM users u
+      LEFT JOIN wallets w ON u.email = w.user_email
+      ORDER BY u.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Admin users error:", err);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+// Update user
+router.put("/api/admin/users/:id", async (req, res) => {
+  const { id } = req.params;
+  const { balance, tokens } = req.body;
+  
+  try {
+    // Get user email first
+    const userRes = await pool.query("SELECT email FROM users WHERE id = $1", [id]);
+    if (!userRes.rows.length) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    const email = userRes.rows[0].email;
+    
+    // Update wallet
+    await pool.query(
+      "UPDATE wallets SET balance = $1, tokens = $2 WHERE user_email = $3",
+      [balance, tokens, email]
+    );
+    
+    res.json({ message: "User updated successfully" });
+  } catch (err) {
+    console.error("Update user error:", err);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+// Get all orders
+router.get("/api/admin/orders", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT o.*, u.email as user_email
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      ORDER BY o.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Admin orders error:", err);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
+});
+
+// Update order status
+router.put("/api/admin/orders/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  const { status } = req.body;
+  
+  try {
+    await pool.query(
+      "UPDATE orders SET status = $1 WHERE order_id = $2",
+      [status, orderId]
+    );
+    
+    res.json({ message: "Order status updated" });
+  } catch (err) {
+    console.error("Update order error:", err);
+    res.status(500).json({ error: "Failed to update order" });
+  }
+});
+
+// Get all transactions
+router.get("/api/admin/transactions", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT t.*, u.email as user_email
+      FROM transactions t
+      LEFT JOIN users u ON t.user_id = u.id
+      ORDER BY t.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Admin transactions error:", err);
+    res.status(500).json({ error: "Failed to fetch transactions" });
+  }
+});
+
+// Update transaction status
+router.put("/api/admin/transactions/:id", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  
+  try {
+    await pool.query(
+      "UPDATE transactions SET status = $1 WHERE id = $2",
+      [status, id]
+    );
+    
+    res.json({ message: "Transaction status updated" });
+  } catch (err) {
+    console.error("Update transaction error:", err);
+    res.status(500).json({ error: "Failed to update transaction" });
+  }
+});
+
+// Get all wallets
+router.get("/api/admin/wallets", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT w.*, u.name, u.username
+      FROM wallets w
+      LEFT JOIN users u ON w.user_email = u.email
+      ORDER BY w.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Admin wallets error:", err);
+    res.status(500).json({ error: "Failed to fetch wallets" });
+  }
+});
+
+// Get gift transactions
+router.get("/api/admin/gifts", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT t.*, u.email as user_email
+      FROM transactions t
+      LEFT JOIN users u ON t.user_id = u.id
+      WHERE t.type = 'gift' OR t.type = 'gift-token'
+      ORDER BY t.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Admin gifts error:", err);
+    res.status(500).json({ error: "Failed to fetch gifts" });
+  }
+});
+
+// Update admin settings
+router.put("/api/admin/settings", async (req, res) => {
+  const { freeTokenInterval, tokenPrice } = req.body;
+  
+  try {
+    // In a real app, you'd store these in a settings table
+    // For now, just return success
+    res.json({ 
+      message: "Settings updated",
+      settings: { freeTokenInterval, tokenPrice }
+    });
+  } catch (err) {
+    console.error("Update settings error:", err);
+    res.status(500).json({ error: "Failed to update settings" });
+  }
+});
+
 // router ကို app ထဲ register
 app.use(router);
 
