@@ -727,7 +727,7 @@ router.post("/api/gift/spin", async (req, res) => {
     
     // Add prize amount to balance if it's a cash prize
     if (prizeAmount > 0) {
-      await pool.query(
+    await pool.query(
         `UPDATE wallets SET balance = balance + $1 WHERE user_email = $2`,
         [prizeAmount, userEmail]
       );
@@ -931,6 +931,29 @@ const ADMIN_CREDENTIALS = {
   password: process.env.ADMIN_PASSWORD || "@@admin.221233"
 };
 
+// Admin authentication middleware
+const authenticateAdmin = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+  
+  const token = authHeader.substring(7);
+  try {
+    const decoded = Buffer.from(token, 'base64').toString('ascii');
+    const [username, timestamp] = decoded.split(':');
+    
+    if (username === ADMIN_CREDENTIALS.username) {
+      req.adminUser = { username };
+      next();
+    } else {
+      res.status(401).json({ error: "Invalid token" });
+    }
+  } catch (error) {
+    res.status(401).json({ error: "Invalid token" });
+  }
+};
+
 // Admin login
 router.post("/api/admin/login", async (req, res) => {
   const { username, password } = req.body;
@@ -967,11 +990,11 @@ router.get("/api/admin/verify", async (req, res) => {
 });
 
 // Get all users
-router.get("/api/admin/users", async (req, res) => {
+router.get("/api/admin/users", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT u.id, u.name, u.username, u.email, u.created_at, 
-             w.balance, w.tokens
+             COALESCE(w.balance, 0) as balance, COALESCE(w.tokens, 0) as tokens
       FROM users u
       LEFT JOIN wallets w ON u.email = w.user_email
       ORDER BY u.created_at DESC
@@ -984,7 +1007,7 @@ router.get("/api/admin/users", async (req, res) => {
 });
 
 // Update user
-router.put("/api/admin/users/:id", async (req, res) => {
+router.put("/api/admin/users/:id", authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   const { balance, tokens } = req.body;
   
@@ -1011,7 +1034,7 @@ router.put("/api/admin/users/:id", async (req, res) => {
 });
 
 // Delete user
-router.delete("/api/admin/users/:id", async (req, res) => {
+router.delete("/api/admin/users/:id", authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   
   try {
@@ -1038,7 +1061,7 @@ router.delete("/api/admin/users/:id", async (req, res) => {
 });
 
 // Get all orders
-router.get("/api/admin/orders", async (req, res) => {
+router.get("/api/admin/orders", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT o.*, u.email as user_email
@@ -1083,7 +1106,7 @@ router.put("/api/admin/orders/:orderId", async (req, res) => {
 });
 
 // Get all transactions
-router.get("/api/admin/transactions", async (req, res) => {
+router.get("/api/admin/transactions", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT t.*, u.email as user_email
@@ -1132,7 +1155,7 @@ router.put("/api/admin/transactions/:id", async (req, res) => {
 });
 
 // Get all wallets
-router.get("/api/admin/wallets", async (req, res) => {
+router.get("/api/admin/wallets", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT w.*, u.name, u.username

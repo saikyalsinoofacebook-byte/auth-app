@@ -759,17 +759,21 @@
             }
         }
 
-        // Auto-logout for inactivity
-        let inactivityTimer;
-        function resetInactivityTimer() {
-            clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(() => {
-                if (document.getElementById('auto-logout')?.checked) {
-                    alert('Session expired due to inactivity');
-                    logout();
-                }
-            }, 30 * 60 * 1000); // 30 minutes
-        }
+         // Auto-logout for inactivity
+         let inactivityTimer;
+         function resetInactivityTimer() {
+             clearTimeout(inactivityTimer);
+             inactivityTimer = setTimeout(() => {
+                 if (document.getElementById('auto-logout')?.checked) {
+                     if (confirm('Your session will expire due to inactivity. Do you want to stay logged in?')) {
+                         resetInactivityTimer(); // Reset timer if user wants to stay
+                     } else {
+                         alert('Session expired due to inactivity');
+                         logout();
+                     }
+                 }
+             }, 60 * 60 * 1000); // 60 minutes instead of 30
+         }
 
         // Reset timer on user activity
         document.addEventListener('mousemove', resetInactivityTimer);

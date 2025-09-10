@@ -418,10 +418,14 @@ async function loadDashboard() {
         // Update stats
         document.getElementById('total-users').textContent = users.length;
         document.getElementById('total-orders').textContent = orders.length;
-        document.getElementById('total-revenue').textContent = 
-            transactions.filter(t => (t.amount || 0) > 0).reduce((sum, t) => sum + (t.amount || 0), 0).toFixed(2);
+        
+        const totalRevenue = transactions
+            .filter(t => t && typeof t.amount === 'number' && t.amount > 0)
+            .reduce((sum, t) => sum + t.amount, 0);
+        document.getElementById('total-revenue').textContent = totalRevenue.toFixed(2);
+        
         document.getElementById('pending-orders').textContent = 
-            orders.filter(o => o.status === 'Pending').length;
+            orders.filter(o => o && o.status === 'Pending').length;
         
         // Load recent activity
         loadRecentActivity(transactions.slice(0, 10));
