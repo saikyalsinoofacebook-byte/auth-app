@@ -263,7 +263,11 @@ async function loadDashboard() {
 
 // Load recent activity
 function loadRecentActivity(activities) {
-    const container = document.getElementById('recent-activity');
+    const container = document.getElementById('recent-activity-list');
+    if (!container) {
+        console.error('Recent activity container not found');
+        return;
+    }
     container.innerHTML = '';
     
     activities.forEach(activity => {
@@ -471,9 +475,9 @@ async function loadOrders() {
         const orders = await response.json();
         adminData.orders = orders;
         
-        const statusFilter = document.getElementById('order-status-filter').value;
-        const filteredOrders = statusFilter ? 
-            orders.filter(o => o.status === statusFilter) : orders;
+        const statusFilter = document.getElementById('order-status-filter');
+        const filteredOrders = statusFilter && statusFilter.value ? 
+            orders.filter(o => o.status === statusFilter.value) : orders;
         
         tbody.innerHTML = '';
         
@@ -1680,3 +1684,576 @@ async function saveSettings() {
         alert('Save error: ' + error.message);
     }
 }
+
+// Filter functions
+function filterUsers() {
+    const searchTerm = document.getElementById('user-search').value.toLowerCase();
+    const sortBy = document.getElementById('user-sort').value;
+    const filterBy = document.getElementById('user-filter').value;
+    
+    let filteredUsers = adminData.users || [];
+    
+    // Filter by search term
+    if (searchTerm) {
+        filteredUsers = filteredUsers.filter(user => 
+            (user.name || user.username || user.user_name || '').toLowerCase().includes(searchTerm) ||
+            (user.email || user.user_email || '').toLowerCase().includes(searchTerm)
+        );
+    }
+    
+    // Filter by balance
+    if (filterBy === 'with-balance') {
+        filteredUsers = filteredUsers.filter(user => (user.balance || 0) > 0);
+    } else if (filterBy === 'no-balance') {
+        filteredUsers = filteredUsers.filter(user => (user.balance || 0) === 0);
+    }
+    
+    // Sort users
+    switch(sortBy) {
+        case 'newest':
+            filteredUsers.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            break;
+        case 'oldest':
+            filteredUsers.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            break;
+        case 'balance-high':
+            filteredUsers.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+            break;
+        case 'balance-low':
+            filteredUsers.sort((a, b) => (a.balance || 0) - (b.balance || 0));
+            break;
+    }
+    
+    // Update the table
+    updateUsersTable(filteredUsers);
+}
+
+function filterTransactions() {
+    const typeFilter = document.getElementById('transaction-type-filter').value;
+    
+    let filteredTransactions = adminData.transactions || [];
+    
+    if (typeFilter) {
+        filteredTransactions = filteredTransactions.filter(transaction => 
+            transaction.type === typeFilter
+        );
+    }
+    
+    updateTransactionsTable(filteredTransactions);
+}
+
+// Admin CRUD Functions
+function viewUser(userId) {
+    const user = adminData.users.find(u => u.id == userId);
+    if (user) {
+        const modal = createUserModal(user, 'view');
+        document.body.appendChild(modal);
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    } else {
+        alert('User not found');
+    }
+}
+
+function editUser(userId) {
+    const user = adminData.users.find(u => u.id == userId);
+    if (user) {
+        const modal = createUserModal(user, 'edit');
+        document.body.appendChild(modal);
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    } else {
+        alert('User not found');
+    }
+}
+
+function deleteUser(userId) {
+    if (confirm(`Are you sure you want to delete user ${userId}?`)) {
+        // Call delete API
+        fetch(`${API_BASE}/api/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('User deleted successfully', 'success');
+                loadUsers(); // Reload users
+            } else {
+                showNotification('Failed to delete user', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Delete user error:', error);
+            showNotification('Error deleting user', 'error');
+        });
+    }
+}
+
+function viewOrder(orderId) {
+    const order = adminData.orders.find(o => o.id == orderId);
+    if (order) {
+        const modal = createOrderModal(order, 'view');
+        document.body.appendChild(modal);
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    } else {
+        alert('Order not found');
+    }
+}
+
+function editOrder(orderId) {
+    const order = adminData.orders.find(o => o.id == orderId);
+    if (order) {
+        const modal = createOrderModal(order, 'edit');
+        document.body.appendChild(modal);
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    } else {
+        alert('Order not found');
+    }
+}
+
+function viewTransaction(transactionId) {
+    const transaction = adminData.transactions.find(t => t.id == transactionId);
+    if (transaction) {
+        const modal = createTransactionModal(transaction, 'view');
+        document.body.appendChild(modal);
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    } else {
+        alert('Transaction not found');
+    }
+}
+
+function editTransaction(transactionId) {
+    const transaction = adminData.transactions.find(t => t.id == transactionId);
+    if (transaction) {
+        const modal = createTransactionModal(transaction, 'edit');
+        document.body.appendChild(modal);
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    } else {
+        alert('Transaction not found');
+    }
+}
+
+function viewWallet(userEmail) {
+    const wallet = adminData.wallets.find(w => w.user_email === userEmail || w.email === userEmail);
+    if (wallet) {
+        const modal = createWalletModal(wallet, 'view');
+        document.body.appendChild(modal);
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    } else {
+        alert('Wallet not found');
+    }
+}
+
+function editWallet(userEmail) {
+    const wallet = adminData.wallets.find(w => w.user_email === userEmail || w.email === userEmail);
+    if (wallet) {
+        const modal = createWalletModal(wallet, 'edit');
+        document.body.appendChild(modal);
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    } else {
+        alert('Wallet not found');
+    }
+}
+
+function addFunds(userEmail) {
+    const amount = prompt(`Enter amount to add to ${userEmail}:`);
+    if (amount && !isNaN(amount) && parseFloat(amount) > 0) {
+        fetch(`${API_BASE}/api/admin/wallets/${userEmail}/add-funds`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ amount: parseFloat(amount) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`Added ${amount} Ks to ${userEmail}`, 'success');
+                loadWallets(); // Reload wallets
+            } else {
+                showNotification('Failed to add funds', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Add funds error:', error);
+            showNotification('Error adding funds', 'error');
+        });
+    }
+}
+
+function addTokens(userEmail) {
+    const tokens = prompt(`Enter number of tokens to add to ${userEmail}:`);
+    if (tokens && !isNaN(tokens) && parseInt(tokens) > 0) {
+        fetch(`${API_BASE}/api/admin/wallets/${userEmail}/add-tokens`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ tokens: parseInt(tokens) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`Added ${tokens} tokens to ${userEmail}`, 'success');
+                loadWallets(); // Reload wallets
+            } else {
+                showNotification('Failed to add tokens', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Add tokens error:', error);
+            showNotification('Error adding tokens', 'error');
+        });
+    }
+}
+
+// Modal creation functions
+function createUserModal(user, mode) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">${mode === 'view' ? 'View' : 'Edit'} User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="user-form">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" name="name" value="${user.name || ''}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" value="${user.email || ''}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Balance (Ks)</label>
+                            <input type="number" class="form-control" name="balance" value="${user.balance || 0}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tokens</label>
+                            <input type="number" class="form-control" name="tokens" value="${user.tokens || 0}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    ${mode === 'edit' ? '<button type="button" class="btn btn-primary" onclick="saveUser(' + user.id + ')">Save Changes</button>' : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    return modal;
+}
+
+function createOrderModal(order, mode) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">${mode === 'view' ? 'View' : 'Edit'} Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="order-form">
+                        <div class="mb-3">
+                            <label class="form-label">Order ID</label>
+                            <input type="text" class="form-control" value="${order.id || ''}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">User</label>
+                            <input type="text" class="form-control" value="${order.user_name || order.username || ''}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Product</label>
+                            <input type="text" class="form-control" name="product" value="${order.product || order.item_name || ''}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Amount (Ks)</label>
+                            <input type="number" class="form-control" name="amount" value="${order.amount || 0}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status" ${mode === 'view' ? 'disabled' : ''}>
+                                <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    ${mode === 'edit' ? '<button type="button" class="btn btn-primary" onclick="saveOrder(' + order.id + ')">Save Changes</button>' : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    return modal;
+}
+
+function createTransactionModal(transaction, mode) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">${mode === 'view' ? 'View' : 'Edit'} Transaction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="transaction-form">
+                        <div class="mb-3">
+                            <label class="form-label">Transaction ID</label>
+                            <input type="text" class="form-control" value="${transaction.id || ''}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">User</label>
+                            <input type="text" class="form-control" value="${transaction.user_name || transaction.username || ''}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" name="type" ${mode === 'view' ? 'disabled' : ''}>
+                                <option value="deposit" ${transaction.type === 'deposit' ? 'selected' : ''}>Deposit</option>
+                                <option value="withdraw" ${transaction.type === 'withdraw' ? 'selected' : ''}>Withdraw</option>
+                                <option value="order" ${transaction.type === 'order' ? 'selected' : ''}>Order Payment</option>
+                                <option value="gift" ${transaction.type === 'gift' ? 'selected' : ''}>Gift Prize</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Amount (Ks)</label>
+                            <input type="number" class="form-control" name="amount" value="${transaction.amount || 0}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status" ${mode === 'view' ? 'disabled' : ''}>
+                                <option value="pending" ${transaction.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="completed" ${transaction.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                <option value="failed" ${transaction.status === 'failed' ? 'selected' : ''}>Failed</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    ${mode === 'edit' ? '<button type="button" class="btn btn-primary" onclick="saveTransaction(' + transaction.id + ')">Save Changes</button>' : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    return modal;
+}
+
+function createWalletModal(wallet, mode) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">${mode === 'view' ? 'View' : 'Edit'} Wallet</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="wallet-form">
+                        <div class="mb-3">
+                            <label class="form-label">User</label>
+                            <input type="text" class="form-control" value="${wallet.user_name || wallet.username || ''}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" value="${wallet.user_email || wallet.email || ''}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Total Balance (Ks)</label>
+                            <input type="number" class="form-control" name="balance" value="${wallet.total_balance || wallet.balance || 0}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Available Balance (Ks)</label>
+                            <input type="number" class="form-control" name="available" value="${wallet.available_balance || wallet.available || 0}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">On Hold (Ks)</label>
+                            <input type="number" class="form-control" name="onhold" value="${wallet.on_hold_balance || wallet.on_hold || 0}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tokens</label>
+                            <input type="number" class="form-control" name="tokens" value="${wallet.tokens || 0}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    ${mode === 'edit' ? '<button type="button" class="btn btn-primary" onclick="saveWallet(\'' + (wallet.user_email || wallet.email) + '\')">Save Changes</button>' : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    return modal;
+}
+
+// Save functions
+function saveUser(userId) {
+    const form = document.getElementById('user-form');
+    const formData = new FormData(form);
+    
+    const userData = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        balance: parseFloat(formData.get('balance')),
+        tokens: parseInt(formData.get('tokens'))
+    };
+    
+    fetch(`${API_BASE}/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('User updated successfully', 'success');
+            loadUsers(); // Reload users
+            bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
+        } else {
+            showNotification('Failed to update user', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Update user error:', error);
+        showNotification('Error updating user', 'error');
+    });
+}
+
+function saveOrder(orderId) {
+    const form = document.getElementById('order-form');
+    const formData = new FormData(form);
+    
+    const orderData = {
+        product: formData.get('product'),
+        amount: parseFloat(formData.get('amount')),
+        status: formData.get('status')
+    };
+    
+    fetch(`${API_BASE}/api/admin/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Order updated successfully', 'success');
+            loadOrders(); // Reload orders
+            bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
+        } else {
+            showNotification('Failed to update order', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Update order error:', error);
+        showNotification('Error updating order', 'error');
+    });
+}
+
+function saveTransaction(transactionId) {
+    const form = document.getElementById('transaction-form');
+    const formData = new FormData(form);
+    
+    const transactionData = {
+        type: formData.get('type'),
+        amount: parseFloat(formData.get('amount')),
+        status: formData.get('status')
+    };
+    
+    fetch(`${API_BASE}/api/admin/transactions/${transactionId}`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(transactionData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Transaction updated successfully', 'success');
+            loadTransactions(); // Reload transactions
+            bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
+        } else {
+            showNotification('Failed to update transaction', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Update transaction error:', error);
+        showNotification('Error updating transaction', 'error');
+    });
+}
+
+function saveWallet(userEmail) {
+    const form = document.getElementById('wallet-form');
+    const formData = new FormData(form);
+    
+    const walletData = {
+        balance: parseFloat(formData.get('balance')),
+        available: parseFloat(formData.get('available')),
+        onhold: parseFloat(formData.get('onhold')),
+        tokens: parseInt(formData.get('tokens'))
+    };
+    
+    fetch(`${API_BASE}/api/admin/wallets/${userEmail}`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(walletData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Wallet updated successfully', 'success');
+            loadWallets(); // Reload wallets
+            bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
+        } else {
+            showNotification('Failed to update wallet', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Update wallet error:', error);
+        showNotification('Error updating wallet', 'error');
+    });
+}
+
+// Initialize admin panel when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin panel JavaScript loaded');
+    
+    // Start inactivity timer
+    if (typeof startInactivityTimer === 'function') {
+        startInactivityTimer();
+    }
+});

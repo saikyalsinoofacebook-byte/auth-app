@@ -1174,9 +1174,9 @@ router.delete("/api/admin/users/:id", authenticateAdmin, async (req, res) => {
 router.get("/api/admin/orders", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT o.*, u.email as user_email
+      SELECT o.*, u.name as user_name
       FROM orders o
-      LEFT JOIN users u ON o.user_id = u.id
+      LEFT JOIN users u ON o.user_email = u.email
       ORDER BY o.created_at DESC
     `);
     res.json(result.rows);
