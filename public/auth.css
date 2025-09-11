@@ -620,8 +620,8 @@ html {
     transform: translateY(-10px);
   }
   60% {
-    transform: translateY(-5px);
-  }
+  transform: translateY(-5px);
+}
 }
 
 @keyframes textSlideIn {

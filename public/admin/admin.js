@@ -671,7 +671,7 @@ async function loadTransactions() {
                         </button>
                             <button class="btn btn-sm btn-outline-danger" onclick="rejectTransaction(${transaction.id || transaction.transaction_id})" title="Reject Transaction">
                                 <i class="bi bi-x"></i>
-                            </button>
+                        </button>
                     ` : ''}
                     </div>
                 </td>
@@ -1077,12 +1077,38 @@ async function processAddFunds(userEmail, amount, reason, notes) {
             alert('Funds added successfully');
             loadWallets();
             closeModal();
-        } else {
+    } else {
             const errorData = await response.json();
             alert('Add funds failed: ' + (errorData.message || 'Unknown error'));
         }
     } catch (error) {
         alert('Add funds error: ' + error.message);
+    }
+}
+
+// View user details
+function viewUser(userId) {
+    const user = adminData.users.find(u => u.id == userId);
+    if (user) {
+        alert(`User Details:\n\nID: ${user.id}\nName: ${user.name}\nEmail: ${user.email}\nBalance: ${user.balance || 0} Ks\nTokens: ${user.tokens || 0}\nCreated: ${formatDate(user.created_at)}`);
+    } else {
+        alert('User not found');
+    }
+}
+
+// Edit user
+function editUser(userId) {
+    const user = adminData.users.find(u => u.id == userId);
+    if (user) {
+        const newBalance = prompt(`Edit balance for ${user.name}:`, user.balance || 0);
+        const newTokens = prompt(`Edit tokens for ${user.name}:`, user.tokens || 0);
+        
+        if (newBalance !== null && newTokens !== null) {
+            // Here you would make an API call to update the user
+            alert('User edit functionality will be implemented');
+        }
+    } else {
+        alert('User not found');
     }
 }
 
@@ -1109,6 +1135,242 @@ async function deleteUser(userId) {
     } catch (error) {
         alert('Delete error: ' + error.message);
     }
+}
+
+// View order details
+function viewOrder(orderId) {
+    const order = adminData.orders.find(o => o.order_id == orderId);
+    if (order) {
+        alert(`Order Details:\n\nOrder ID: ${order.order_id}\nUser: ${order.user_email}\nItem: ${order.item_details}\nPrice: ${order.price} Ks\nStatus: ${order.status}\nCreated: ${formatDate(order.created_at)}`);
+    } else {
+        alert('Order not found');
+    }
+}
+
+// Edit order
+function editOrder(orderId) {
+    const order = adminData.orders.find(o => o.order_id == orderId);
+    if (order) {
+        const newStatus = prompt(`Edit status for Order ${orderId}:`, order.status);
+        if (newStatus !== null) {
+            alert('Order edit functionality will be implemented');
+        }
+    } else {
+        alert('Order not found');
+    }
+}
+
+// View transaction details
+function viewTransaction(transactionId) {
+    const transaction = adminData.transactions.find(t => t.id == transactionId);
+    if (transaction) {
+        alert(`Transaction Details:\n\nID: ${transaction.id}\nUser: ${transaction.user_email}\nType: ${transaction.type}\nAmount: ${transaction.amount} Ks\nStatus: ${transaction.status}\nCreated: ${formatDate(transaction.created_at)}`);
+    } else {
+        alert('Transaction not found');
+    }
+}
+
+// Edit transaction
+function editTransaction(transactionId) {
+    const transaction = adminData.transactions.find(t => t.id == transactionId);
+    if (transaction) {
+        const newStatus = prompt(`Edit status for Transaction ${transactionId}:`, transaction.status);
+        if (newStatus !== null) {
+            alert('Transaction edit functionality will be implemented');
+        }
+    } else {
+        alert('Transaction not found');
+    }
+}
+
+// View wallet details
+function viewWallet(userEmail) {
+    const wallet = adminData.wallets.find(w => w.user_email == userEmail);
+    if (wallet) {
+        alert(`Wallet Details:\n\nUser: ${wallet.user_email}\nBalance: ${wallet.balance} Ks\nOn Hold: ${wallet.onhold} Ks\nTokens: ${wallet.tokens}\nCreated: ${formatDate(wallet.created_at)}`);
+    } else {
+        alert('Wallet not found');
+    }
+}
+
+// Edit wallet
+function editWallet(userEmail) {
+    const wallet = adminData.wallets.find(w => w.user_email == userEmail);
+    if (wallet) {
+        const newBalance = prompt(`Edit balance for ${userEmail}:`, wallet.balance);
+        const newTokens = prompt(`Edit tokens for ${userEmail}:`, wallet.tokens);
+        if (newBalance !== null && newTokens !== null) {
+            alert('Wallet edit functionality will be implemented');
+        }
+    } else {
+        alert('Wallet not found');
+    }
+}
+
+// Add funds to wallet
+async function addFunds(userEmail) {
+    const amount = prompt(`Add funds to ${userEmail}:`, '0');
+    if (amount !== null && !isNaN(amount) && amount > 0) {
+        try {
+            const adminToken = localStorage.getItem('adminToken');
+            const response = await fetch(`${API_BASE}/api/admin/wallets/${encodeURIComponent(userEmail)}/add-funds`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    amount: parseFloat(amount),
+                    reason: 'Admin added funds',
+                    notes: 'Added via admin panel'
+                })
+        });
+        
+        if (response.ok) {
+                alert('Funds added successfully');
+                loadWallets();
+        } else {
+                alert('Failed to add funds');
+        }
+    } catch (error) {
+            console.error('Add funds error:', error);
+            alert('Add funds error: ' + error.message);
+        }
+    }
+}
+
+// Add tokens to wallet
+async function addTokens(userEmail) {
+    const amount = prompt(`Add tokens to ${userEmail}:`, '0');
+    if (amount !== null && !isNaN(amount) && amount > 0) {
+        try {
+            const adminToken = localStorage.getItem('adminToken');
+            const response = await fetch(`${API_BASE}/api/admin/wallets/${encodeURIComponent(userEmail)}/add-tokens`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    amount: parseInt(amount),
+                    reason: 'Admin added tokens',
+                    notes: 'Added via admin panel'
+                })
+            });
+            
+            if (response.ok) {
+                alert('Tokens added successfully');
+                loadWallets();
+            } else {
+                alert('Failed to add tokens');
+            }
+        } catch (error) {
+            console.error('Add tokens error:', error);
+            alert('Add tokens error: ' + error.message);
+        }
+    }
+}
+
+// Close modal function
+function closeModal() {
+    // This function is called when modals need to be closed
+    // For now, it's a placeholder
+    console.log('Modal closed');
+}
+
+// Filter users function
+function filterUsers() {
+    const searchTerm = document.getElementById('user-search').value.toLowerCase();
+    const sortBy = document.getElementById('user-sort').value;
+    const filterBy = document.getElementById('user-filter').value;
+    
+    let filteredUsers = adminData.users || [];
+    
+    // Filter by search term
+    if (searchTerm) {
+        filteredUsers = filteredUsers.filter(user => 
+            user.name.toLowerCase().includes(searchTerm) ||
+            user.email.toLowerCase().includes(searchTerm)
+        );
+    }
+    
+    // Filter by balance
+    if (filterBy === 'with-balance') {
+        filteredUsers = filteredUsers.filter(user => (user.balance || 0) > 0);
+    } else if (filterBy === 'no-balance') {
+        filteredUsers = filteredUsers.filter(user => (user.balance || 0) === 0);
+    }
+    
+    // Sort users
+    switch(sortBy) {
+        case 'newest':
+            filteredUsers.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            break;
+        case 'oldest':
+            filteredUsers.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            break;
+        case 'balance-high':
+            filteredUsers.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+            break;
+        case 'balance-low':
+            filteredUsers.sort((a, b) => (a.balance || 0) - (b.balance || 0));
+            break;
+    }
+    
+    // Update the table
+    updateUsersTable(filteredUsers);
+}
+
+// Update users table with filtered data
+function updateUsersTable(users) {
+    const tbody = document.getElementById('users-table');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No users found</td></tr>';
+        return;
+    }
+    
+    users.forEach((user, index) => {
+        const row = document.createElement('tr');
+        row.style.animationDelay = `${index * 0.1}s`;
+        row.className = 'fade-in-row';
+        
+        row.innerHTML = `
+            <td>${user.id || user.user_id || 'N/A'}</td>
+            <td>${user.name || user.username || user.user_name || 'N/A'}</td>
+            <td>${user.email || user.user_email || 'N/A'}</td>
+            <td><span class="badge bg-success">${user.balance || 0} Ks</span></td>
+            <td><span class="badge bg-info">${user.tokens || 0}</span></td>
+            <td>${formatDate(user.created_at)}</td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewUser(${user.id || user.user_id})" title="View Details">
+                    <i class="bi bi-eye"></i>
+                </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="editUser(${user.id || user.user_id})" title="Edit User">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${user.id || user.user_id})" title="Delete User">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Show bulk add funds modal
+function showBulkAddFunds() {
+    alert('Bulk add funds functionality will be implemented');
+}
+
+// Show bulk add tokens modal
+function showBulkAddTokens() {
+    alert('Bulk add tokens functionality will be implemented');
 }
 
 // Utility function to format date safely
