@@ -40,6 +40,208 @@ function initializeAdminPanel() {
     console.log('Admin panel initialized successfully');
 }
 
+// Setup event listeners
+function setupEventListeners() {
+    console.log('Setting up event listeners...');
+    
+    // Menu click handlers
+    const menuItems = document.querySelectorAll('.menu-item');
+    console.log('Found menu items:', menuItems.length);
+    
+    menuItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const page = this.getAttribute('data-page');
+            console.log('Menu item clicked:', page);
+            switchPage(page);
+        });
+    });
+    
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
+    
+    console.log('Event listeners setup complete');
+}
+
+// Setup mobile menu
+function setupMobileMenu() {
+    console.log('Setting up mobile menu...');
+    
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
+    const mobileCloseBtn = document.querySelector('.mobile-close-btn');
+    
+    if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+    }
+    
+    if (mobileMenuOverlay) {
+        mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+    }
+    
+    if (mobileCloseBtn) {
+        mobileCloseBtn.addEventListener('click', closeMobileMenu);
+    }
+    
+    console.log('Mobile menu setup complete');
+}
+
+// Toggle mobile menu
+function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.mobile-menu-overlay');
+    
+    if (sidebar && overlay) {
+        sidebar.classList.add('mobile-open');
+        overlay.style.display = 'block';
+    }
+}
+
+// Close mobile menu
+function closeMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.mobile-menu-overlay');
+    
+    if (sidebar && overlay) {
+        sidebar.classList.remove('mobile-open');
+        overlay.style.display = 'none';
+    }
+}
+
+// Handle window resize
+function handleResize() {
+    if (window.innerWidth > 768) {
+        closeMobileMenu();
+    }
+}
+
+// Load recent activity
+function loadRecentActivity(transactions) {
+    const activityList = document.getElementById('recent-activity');
+    if (!activityList) return;
+    
+    if (!transactions || transactions.length === 0) {
+        activityList.innerHTML = '<div class="activity-item"><div class="activity-content"><p>No recent activity</p></div></div>';
+        return;
+    }
+    
+    activityList.innerHTML = transactions.map(transaction => `
+        <div class="activity-item">
+            <div class="activity-icon ${transaction.type}">
+                <i class="bi bi-${getTransactionIcon(transaction.type)}"></i>
+            </div>
+            <div class="activity-content">
+                <h6>${transaction.type} - ${transaction.amount} Ks</h6>
+                <p>${transaction.remark || 'No description'}</p>
+            </div>
+            <div class="activity-time">
+                ${new Date(transaction.created_at).toLocaleString()}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Get transaction icon
+function getTransactionIcon(type) {
+    const icons = {
+        'deposit': 'arrow-down-circle',
+        'withdraw': 'arrow-up-circle',
+        'order': 'shopping-cart',
+        'gift': 'gift',
+        'refund': 'arrow-counterclockwise'
+    };
+    return icons[type] || 'circle';
+}
+
+// Switch page function
+function switchPage(page) {
+    console.log('Switching to page:', page);
+    
+    // Hide all pages
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(p => p.style.display = 'none');
+    
+    // Remove active class from all menu items
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => item.classList.remove('active'));
+    
+    // Show selected page
+    const targetPage = document.getElementById(page + '-page');
+    if (targetPage) {
+        targetPage.style.display = 'block';
+    }
+    
+    // Add active class to selected menu item
+    const activeMenuItem = document.querySelector(`[data-page="${page}"]`);
+    if (activeMenuItem) {
+        activeMenuItem.classList.add('active');
+    }
+    
+    // Load page data
+    switch(page) {
+        case 'dashboard':
+            console.log('Loading dashboard...');
+            loadDashboard();
+            break;
+        case 'users':
+            console.log('Loading users...');
+            loadUsers();
+            break;
+        case 'orders':
+            console.log('Loading orders...');
+            loadOrders();
+            break;
+        case 'transactions':
+            console.log('Loading transactions...');
+            loadTransactions();
+            break;
+        case 'wallets':
+            console.log('Loading wallets...');
+            loadWallets();
+            break;
+        case 'gifts':
+            console.log('Loading gifts...');
+            loadGifts();
+            break;
+        case 'settings':
+            console.log('Loading settings...');
+            loadSettings();
+            break;
+        default:
+            console.error('Unknown page:', page);
+    }
+}
+
+// Load gifts function
+function loadGifts() {
+    const tbody = document.getElementById('gifts-table');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Loading gifts...</td></tr>';
+    
+    // This would load gift data from the API
+    // For now, show placeholder
+    setTimeout(() => {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No gift data available</td></tr>';
+    }, 1000);
+}
+
+// Load settings function
+function loadSettings() {
+    // This would load settings from the API
+    console.log('Settings page loaded');
+}
+
+// Logout function
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('adminToken');
+        window.location.href = 'login.html';
+    }
+}
+
 // Check admin authentication
 function checkAdminAuth() {
     const adminToken = localStorage.getItem('adminToken');
@@ -122,11 +324,11 @@ async function loadUsers() {
                 <td>
                     <div class="btn-group" role="group">
                         <button class="btn btn-sm btn-outline-primary" onclick="viewUser(${user.id || user.user_id})" title="View Details">
-                            <i class="bi bi-eye"></i>
-                        </button>
+                        <i class="bi bi-eye"></i>
+                    </button>
                         <button class="btn btn-sm btn-outline-warning" onclick="editUser(${user.id || user.user_id})" title="Edit User">
-                            <i class="bi bi-pencil"></i>
-                        </button>
+                        <i class="bi bi-pencil"></i>
+                    </button>
                         <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${user.id || user.user_id})" title="Delete User">
                             <i class="bi bi-trash"></i>
                         </button>
@@ -195,16 +397,16 @@ async function loadOrders() {
                 <td>
                     <div class="btn-group" role="group">
                         <button class="btn btn-sm btn-outline-primary" onclick="viewOrder('${order.order_id || order.id}')" title="View Details">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                        ${order.status === 'Pending' ? `
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    ${order.status === 'Pending' ? `
                             <button class="btn btn-sm btn-outline-success" onclick="approveOrder('${order.order_id || order.id}')" title="Approve Order">
-                                <i class="bi bi-check"></i>
-                            </button>
+                            <i class="bi bi-check"></i>
+                        </button>
                             <button class="btn btn-sm btn-outline-danger" onclick="rejectOrder('${order.order_id || order.id}')" title="Reject Order">
-                                <i class="bi bi-x"></i>
-                            </button>
-                        ` : ''}
+                            <i class="bi bi-x"></i>
+                        </button>
+                    ` : ''}
                     </div>
                 </td>
             `;
@@ -277,16 +479,16 @@ async function loadTransactions() {
                 <td>
                     <div class="btn-group" role="group">
                         <button class="btn btn-sm btn-outline-primary" onclick="viewTransaction(${transaction.id || transaction.transaction_id})" title="View Details">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                        ${transaction.status === 'Pending' && transaction.type === 'deposit' ? `
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    ${transaction.status === 'Pending' && transaction.type === 'deposit' ? `
                             <button class="btn btn-sm btn-outline-success" onclick="approveTransaction(${transaction.id || transaction.transaction_id})" title="Approve Transaction">
-                                <i class="bi bi-check"></i>
-                            </button>
+                            <i class="bi bi-check"></i>
+                        </button>
                             <button class="btn btn-sm btn-outline-danger" onclick="rejectTransaction(${transaction.id || transaction.transaction_id})" title="Reject Transaction">
                                 <i class="bi bi-x"></i>
                             </button>
-                        ` : ''}
+                    ` : ''}
                     </div>
                 </td>
             `;
@@ -372,11 +574,11 @@ async function loadWallets() {
                 <td>
                     <div class="btn-group" role="group">
                         <button class="btn btn-sm btn-outline-primary" onclick="viewWallet('${wallet.user_email || wallet.email}')" title="View Details">
-                            <i class="bi bi-eye"></i>
-                        </button>
+                        <i class="bi bi-eye"></i>
+                    </button>
                         <button class="btn btn-sm btn-outline-success" onclick="addFunds('${wallet.user_email || wallet.email}')" title="Add Funds">
                             <i class="bi bi-plus-circle"></i>
-                        </button>
+                    </button>
                     </div>
                 </td>
             `;
