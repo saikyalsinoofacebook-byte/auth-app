@@ -158,6 +158,19 @@ function getTransactionIcon(type) {
     return icons[type] || 'circle';
 }
 
+// Get transaction type info
+function getTransactionTypeInfo(type) {
+    const typeInfo = {
+        'deposit': { label: 'Deposit', class: 'success', icon: 'bi-arrow-down-circle', color: '#28a745' },
+        'withdraw': { label: 'Withdraw', class: 'danger', icon: 'bi-arrow-up-circle', color: '#dc3545' },
+        'gift': { label: 'Gift', class: 'warning', icon: 'bi-gift', color: '#ffc107' },
+        'gift-token': { label: 'Gift Token', class: 'info', icon: 'bi-ticket', color: '#17a2b8' },
+        'order': { label: 'Order', class: 'primary', icon: 'bi-cart', color: '#007bff' },
+        'refund': { label: 'Refund', class: 'secondary', icon: 'bi-arrow-counterclockwise', color: '#6c757d' }
+    };
+    return typeInfo[type] || { label: 'Unknown', class: 'muted', icon: 'bi-question-circle', color: '#6c757d' };
+}
+
 // Switch page function
 function switchPage(page) {
     console.log('Switching to page:', page);
@@ -312,6 +325,13 @@ function addRetryButton() {
         testBtn.innerHTML = '<i class="bi bi-wifi"></i> Test Connection';
         testBtn.onclick = testServerConnection;
         pageHeader.appendChild(testBtn);
+        
+        const fallbackBtn = document.createElement('button');
+        fallbackBtn.id = 'fallback-dashboard-btn';
+        fallbackBtn.className = 'btn btn-secondary ms-2';
+        fallbackBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Fallback Load';
+        fallbackBtn.onclick = loadDashboardFallback;
+        pageHeader.appendChild(fallbackBtn);
     }
 }
 
@@ -696,6 +716,86 @@ async function loadWallets() {
     }
 }
 
+// Fallback dashboard loading function
+async function loadDashboardFallback() {
+    console.log('Loading dashboard with fallback method...');
+    const adminToken = localStorage.getItem('adminToken');
+    
+    // Try to load each API individually
+    let users = [], orders = [], transactions = [];
+    
+    try {
+        const usersRes = await fetch(`${API_BASE}/api/admin/users`, {
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (usersRes.ok) {
+            const usersData = await usersRes.json();
+            users = Array.isArray(usersData) ? usersData : (usersData.users || []);
+            console.log('✅ Users loaded:', users.length);
+        } else {
+            console.log('❌ Users API failed:', usersRes.status);
+        }
+    } catch (e) {
+        console.log('❌ Users API error:', e.message);
+    }
+    
+    try {
+        const ordersRes = await fetch(`${API_BASE}/api/admin/orders`, {
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (ordersRes.ok) {
+            const ordersData = await ordersRes.json();
+            orders = Array.isArray(ordersData) ? ordersData : (ordersData.orders || []);
+            console.log('✅ Orders loaded:', orders.length);
+        } else {
+            console.log('❌ Orders API failed:', ordersRes.status);
+        }
+    } catch (e) {
+        console.log('❌ Orders API error:', e.message);
+    }
+    
+    try {
+        const transactionsRes = await fetch(`${API_BASE}/api/admin/transactions`, {
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (transactionsRes.ok) {
+            const transactionsData = await transactionsRes.json();
+            transactions = Array.isArray(transactionsData) ? transactionsData : (transactionsData.transactions || []);
+            console.log('✅ Transactions loaded:', transactions.length);
+        } else {
+            console.log('❌ Transactions API failed:', transactionsRes.status);
+        }
+    } catch (e) {
+        console.log('❌ Transactions API error:', e.message);
+    }
+    
+    // Update dashboard with whatever data we got
+    document.getElementById('total-users').textContent = users.length;
+    document.getElementById('total-orders').textContent = orders.length;
+    
+    const totalRevenue = transactions
+        .filter(t => t && typeof t.amount === 'number' && t.amount > 0)
+        .reduce((sum, t) => sum + t.amount, 0);
+    document.getElementById('total-revenue').textContent = totalRevenue.toFixed(2);
+    
+    document.getElementById('pending-orders').textContent = 
+        orders.filter(o => o && o.status === 'Pending').length;
+    
+    // Load recent activity
+    loadRecentActivity(transactions.slice(0, 10));
+    
+    console.log('✅ Dashboard fallback completed');
+}
+
 // Load dashboard - FIXED DATABASE ERROR
 async function loadDashboard() {
     try {
@@ -722,8 +822,18 @@ async function loadDashboard() {
             })
         ]);
         
-        if (!usersRes.ok || !ordersRes.ok || !transactionsRes.ok) {
-            throw new Error('Failed to fetch dashboard data');
+        // Check each response individually for better error reporting
+        if (!usersRes.ok) {
+            console.error('Users API failed:', usersRes.status, usersRes.statusText);
+            throw new Error(`Users API failed: ${usersRes.status} ${usersRes.statusText}`);
+        }
+        if (!ordersRes.ok) {
+            console.error('Orders API failed:', ordersRes.status, ordersRes.statusText);
+            throw new Error(`Orders API failed: ${ordersRes.status} ${ordersRes.statusText}`);
+        }
+        if (!transactionsRes.ok) {
+            console.error('Transactions API failed:', transactionsRes.status, transactionsRes.statusText);
+            throw new Error(`Transactions API failed: ${transactionsRes.status} ${transactionsRes.statusText}`);
         }
         
         const usersData = await usersRes.json();
@@ -751,6 +861,15 @@ async function loadDashboard() {
         
     } catch (error) {
         console.error('Dashboard load error:', error);
+        
+        // Try fallback method first
+        try {
+            console.log('Attempting fallback dashboard loading...');
+            await loadDashboardFallback();
+            return; // If fallback succeeds, exit early
+        } catch (fallbackError) {
+            console.error('Fallback also failed:', fallbackError);
+        }
         
         // Show fallback data when server is having issues
         if (error.message.includes('500') || error.message.includes('Failed to fetch')) {

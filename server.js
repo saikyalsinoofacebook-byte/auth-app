@@ -954,6 +954,27 @@ const authenticateAdmin = (req, res, next) => {
   }
 };
 
+// Health check endpoint
+router.get("/health", async (req, res) => {
+  try {
+    // Test database connection
+    const result = await pool.query('SELECT NOW() as current_time');
+    res.json({ 
+      status: 'OK', 
+      database: 'Connected',
+      timestamp: result.rows[0].current_time,
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (err) {
+    console.error('Health check failed:', err);
+    res.status(500).json({ 
+      status: 'ERROR', 
+      database: 'Disconnected',
+      error: err.message 
+    });
+  }
+});
+
 // Admin login
 router.post("/api/admin/login", async (req, res) => {
   const { username, password } = req.body;
@@ -1004,6 +1025,38 @@ router.get("/api/admin/verify", async (req, res) => {
 // Get all users
 router.get("/api/admin/users", authenticateAdmin, async (req, res) => {
   try {
+    console.log('Admin users endpoint called');
+    
+    // First, let's check if the users table exists
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users'
+      );
+    `);
+    console.log('Users table exists:', tableCheck.rows[0].exists);
+    
+    if (!tableCheck.rows[0].exists) {
+      console.log('Users table does not exist!');
+      return res.status(500).json({ error: "Users table does not exist" });
+    }
+    
+    // Check if wallets table exists
+    const walletsCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'wallets'
+      );
+    `);
+    console.log('Wallets table exists:', walletsCheck.rows[0].exists);
+    
+    // Try a simple query first
+    const simpleResult = await pool.query('SELECT COUNT(*) FROM users');
+    console.log('Users count:', simpleResult.rows[0].count);
+    
+    // Now try the full query
     const result = await pool.query(`
       SELECT u.id, u.name, u.email, u.created_at, 
              COALESCE(w.balance, 0) as balance, COALESCE(w.tokens, 0) as tokens
@@ -1011,10 +1064,22 @@ router.get("/api/admin/users", authenticateAdmin, async (req, res) => {
       LEFT JOIN wallets w ON u.email = w.user_email
       ORDER BY u.created_at DESC
     `);
+    
+    console.log('Users query successful, found:', result.rows.length, 'users');
     res.json(result.rows);
   } catch (err) {
     console.error("Admin users error:", err);
-    res.status(500).json({ error: "Failed to fetch users" });
+    console.error("Error details:", {
+      message: err.message,
+      code: err.code,
+      detail: err.detail,
+      hint: err.hint
+    });
+    res.status(500).json({ 
+      error: "Failed to fetch users",
+      details: err.message,
+      code: err.code
+    });
   }
 });
 
