@@ -958,11 +958,15 @@ const authenticateAdmin = (req, res, next) => {
 router.post("/api/admin/login", async (req, res) => {
   const { username, password } = req.body;
   
+  console.log('Admin login attempt:', { username, password: password ? '***' : 'empty' });
+  
   if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
     // Simple token (in production, use JWT)
     const token = Buffer.from(`${username}:${Date.now()}`).toString('base64');
+    console.log('Admin login successful, token generated');
     res.json({ token, message: "Admin login successful" });
   } else {
+    console.log('Admin login failed - invalid credentials');
     res.status(401).json({ error: "Invalid admin credentials" });
   }
 });
@@ -970,7 +974,10 @@ router.post("/api/admin/login", async (req, res) => {
 // Verify admin token
 router.get("/api/admin/verify", async (req, res) => {
   const authHeader = req.headers.authorization;
+  console.log('Admin verify request:', { authHeader: authHeader ? 'present' : 'missing' });
+  
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('No valid auth header');
     return res.status(401).json({ error: "No token provided" });
   }
   
@@ -979,12 +986,17 @@ router.get("/api/admin/verify", async (req, res) => {
     const decoded = Buffer.from(token, 'base64').toString('ascii');
     const [username, timestamp] = decoded.split(':');
     
+    console.log('Token decoded:', { username, timestamp });
+    
     if (username === ADMIN_CREDENTIALS.username) {
-      res.json({ valid: true });
+      console.log('Token verification successful');
+      res.json({ valid: true, success: true });
     } else {
+      console.log('Token verification failed - username mismatch');
       res.status(401).json({ error: "Invalid token" });
     }
   } catch (error) {
+    console.log('Token verification error:', error.message);
     res.status(401).json({ error: "Invalid token" });
   }
 });

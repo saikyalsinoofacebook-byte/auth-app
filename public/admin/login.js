@@ -25,19 +25,22 @@ function checkExistingAuth() {
 // Verify token and redirect
 async function verifyAndRedirect(token) {
     try {
+        console.log('Verifying existing token...');
         const response = await fetch(`${API_BASE}/api/admin/verify`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
+        console.log('Token verification response:', response.status);
+        
         if (response.ok) {
-            // Token is valid, redirect to admin panel
+            console.log('Token is valid, redirecting to admin panel');
             window.location.href = 'index.html';
         } else {
-            // Token is invalid, remove it
+            console.log('Token is invalid, removing from storage');
             localStorage.removeItem('adminToken');
         }
     } catch (error) {
-        // Network error, remove token
+        console.log('Token verification error:', error);
         localStorage.removeItem('adminToken');
     }
 }
@@ -65,6 +68,7 @@ function setupLoginForm() {
         hideError();
         
         try {
+            console.log('Attempting admin login...');
             const response = await fetch(`${API_BASE}/api/admin/login`, {
                 method: 'POST',
                 headers: {
@@ -73,10 +77,13 @@ function setupLoginForm() {
                 body: JSON.stringify({ username, password })
             });
             
+            console.log('Login response status:', response.status);
             const data = await response.json();
+            console.log('Login response data:', data);
             
             if (response.ok && data.token) {
                 // Login successful
+                console.log('Login successful, storing token');
                 localStorage.setItem('adminToken', data.token);
                 
                 // Show success animation
@@ -84,11 +91,13 @@ function setupLoginForm() {
                 
                 // Redirect after short delay
                 setTimeout(() => {
+                    console.log('Redirecting to admin panel...');
                     window.location.href = 'index.html';
                 }, 1500);
                 
             } else {
                 // Login failed
+                console.log('Login failed:', data.error);
                 showError(data.error || 'Invalid credentials. Please try again.');
                 shakeForm();
             }

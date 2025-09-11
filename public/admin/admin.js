@@ -13,6 +13,8 @@ let adminData = {
 
 // Initialize admin panel
 function initializeAdminPanel() {
+    console.log('Initializing admin panel...');
+    
     // Check admin authentication
     checkAdminAuth();
     
@@ -27,6 +29,15 @@ function initializeAdminPanel() {
     
     // Load dashboard data
     loadDashboard();
+    
+    // Start inactivity timer after panel is loaded
+    if (typeof startInactivityTimer === 'function') {
+        setTimeout(() => {
+            startInactivityTimer();
+        }, 2000); // Wait 2 seconds after initialization
+    }
+    
+    console.log('Admin panel initialized successfully');
 }
 
 // Check admin authentication

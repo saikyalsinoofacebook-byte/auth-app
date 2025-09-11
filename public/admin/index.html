@@ -634,60 +634,77 @@
     <script src="admin.js"></script>
     
     <script>
-        // Authentication check and initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            const adminToken = localStorage.getItem('adminToken');
-            if (!adminToken) {
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            // Verify token with better error handling
-            verifyAdminToken(adminToken).then(isValid => {
-                if (!isValid) {
-                    localStorage.removeItem('adminToken');
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                // Initialize admin panel after successful authentication
-                console.log('Admin authenticated successfully');
-                initializeAdminPanel();
-                
-            }).catch(error => {
-                console.error('Authentication error:', error);
-                localStorage.removeItem('adminToken');
-                window.location.href = 'login.html';
-            });
-        });
+         // Authentication check and initialization
+         document.addEventListener('DOMContentLoaded', function() {
+             console.log('Admin panel loading...');
+             const adminToken = localStorage.getItem('adminToken');
+             
+             if (!adminToken) {
+                 console.log('No admin token found, redirecting to login');
+                 window.location.href = 'login.html';
+                 return;
+             }
+             
+             console.log('Admin token found, verifying...');
+             
+             // Verify token with better error handling
+             verifyAdminToken(adminToken).then(isValid => {
+                 console.log('Token verification result:', isValid);
+                 
+                 if (!isValid) {
+                     console.log('Token invalid, redirecting to login');
+                     localStorage.removeItem('adminToken');
+                     window.location.href = 'login.html';
+                     return;
+                 }
+                 
+                 // Initialize admin panel after successful authentication
+                 console.log('Admin authenticated successfully, initializing panel');
+                 initializeAdminPanel();
+                 
+             }).catch(error => {
+                 console.error('Authentication error:', error);
+                 localStorage.removeItem('adminToken');
+                 window.location.href = 'login.html';
+             });
+         });
 
-        // Enhanced token verification function
-        async function verifyAdminToken(token) {
-            try {
-                const response = await fetch('https://arthur-game-shop.onrender.com/api/admin/verify', {
-                    method: 'GET',
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    timeout: 10000 // 10 second timeout
-                });
-                
-                if (!response.ok) {
-                    if (response.status === 401 || response.status === 403) {
-                        return false;
-                    }
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                return data.valid === true || data.success === true;
-                
-            } catch (error) {
-                console.error('Token verification failed:', error);
-                return false;
-            }
-        }
+         // Enhanced token verification function
+         async function verifyAdminToken(token) {
+             try {
+                 console.log('Verifying token:', token.substring(0, 20) + '...');
+                 
+                 const response = await fetch('https://arthur-game-shop.onrender.com/api/admin/verify', {
+                     method: 'GET',
+                     headers: { 
+                         'Authorization': `Bearer ${token}`,
+                         'Content-Type': 'application/json'
+                     }
+                 });
+                 
+                 console.log('Verification response status:', response.status);
+                 
+                 if (!response.ok) {
+                     if (response.status === 401 || response.status === 403) {
+                         console.log('Token verification failed - unauthorized');
+                         return false;
+                     }
+                     throw new Error(`HTTP error! status: ${response.status}`);
+                 }
+                 
+                 const data = await response.json();
+                 console.log('Verification response data:', data);
+                 
+                 const isValid = data.valid === true || data.success === true;
+                 console.log('Token is valid:', isValid);
+                 
+                 return isValid;
+                 
+             } catch (error) {
+                 console.error('Token verification failed:', error);
+                 return false;
+             }
+         }
 
         // Show loading overlay
         function showLoading() {
@@ -759,9 +776,13 @@
             }
         }
 
-         // Auto-logout for inactivity
+         // Auto-logout for inactivity (only after admin panel is loaded)
          let inactivityTimer;
+         let adminPanelLoaded = false;
+         
          function resetInactivityTimer() {
+             if (!adminPanelLoaded) return; // Don't start timer until panel is loaded
+             
              clearTimeout(inactivityTimer);
              inactivityTimer = setTimeout(() => {
                  if (document.getElementById('auto-logout')?.checked) {
@@ -772,13 +793,22 @@
                          logout();
                      }
                  }
-             }, 60 * 60 * 1000); // 60 minutes instead of 30
+             }, 60 * 60 * 1000); // 60 minutes
          }
 
-        // Reset timer on user activity
-        document.addEventListener('mousemove', resetInactivityTimer);
-        document.addEventListener('keypress', resetInactivityTimer);
-        resetInactivityTimer();
+         // Reset timer on user activity (only after panel is loaded)
+         document.addEventListener('mousemove', () => {
+             if (adminPanelLoaded) resetInactivityTimer();
+         });
+         document.addEventListener('keypress', () => {
+             if (adminPanelLoaded) resetInactivityTimer();
+         });
+         
+         // Start timer only after admin panel is fully loaded
+         function startInactivityTimer() {
+             adminPanelLoaded = true;
+             resetInactivityTimer();
+         }
     </script>
     
     <style>
