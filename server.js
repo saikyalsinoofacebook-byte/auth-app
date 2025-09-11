@@ -1089,12 +1089,12 @@ router.get("/api/admin/users", authenticateAdmin, async (req, res) => {
     const simpleResult = await pool.query('SELECT COUNT(*) FROM users');
     console.log('Users count:', simpleResult.rows[0].count);
     
-    // Now try the full query
+    // Now try the full query - FIXED FOR RAILWAY DATABASE
     const result = await pool.query(`
       SELECT u.id, u.name, u.email, u.created_at, 
              COALESCE(w.balance, 0) as balance, COALESCE(w.tokens, 0) as tokens
       FROM users u
-      LEFT JOIN wallets w ON u.email = w.user_email
+      LEFT JOIN wallets w ON u.id = w.user_id
       ORDER BY u.created_at DESC
     `);
     
@@ -1270,7 +1270,7 @@ router.get("/api/admin/wallets", authenticateAdmin, async (req, res) => {
     const result = await pool.query(`
       SELECT w.*, u.name
       FROM wallets w
-      LEFT JOIN users u ON w.user_email = u.email
+      LEFT JOIN users u ON w.user_id = u.id
       ORDER BY w.created_at DESC
     `);
     res.json(result.rows);
