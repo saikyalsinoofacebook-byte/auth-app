@@ -1005,7 +1005,7 @@ router.get("/api/admin/verify", async (req, res) => {
 router.get("/api/admin/users", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT u.id, u.name, u.username, u.email, u.created_at, 
+      SELECT u.id, u.name, u.email, u.created_at, 
              COALESCE(w.balance, 0) as balance, COALESCE(w.tokens, 0) as tokens
       FROM users u
       LEFT JOIN wallets w ON u.email = w.user_email
@@ -1170,7 +1170,7 @@ router.put("/api/admin/transactions/:id", async (req, res) => {
 router.get("/api/admin/wallets", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT w.*, u.name, u.username
+      SELECT w.*, u.name
       FROM wallets w
       LEFT JOIN users u ON w.user_email = u.email
       ORDER BY w.created_at DESC
