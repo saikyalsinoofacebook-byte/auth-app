@@ -1089,7 +1089,7 @@ router.get("/api/admin/orders", authenticateAdmin, async (req, res) => {
 });
 
 // Update order status
-router.put("/api/admin/orders/:orderId", async (req, res) => {
+router.put("/api/admin/orders/:orderId", authenticateAdmin, async (req, res) => {
   const { orderId } = req.params;
   const { status, price, gameId, serverId } = req.body;
   
@@ -1134,7 +1134,7 @@ router.get("/api/admin/transactions", authenticateAdmin, async (req, res) => {
 });
 
 // Update transaction status
-router.put("/api/admin/transactions/:id", async (req, res) => {
+router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   const { status, amount, type, method, remark } = req.body;
   
@@ -1183,7 +1183,7 @@ router.get("/api/admin/wallets", authenticateAdmin, async (req, res) => {
 });
 
 // Update wallet
-router.put("/api/admin/wallets/:userEmail", async (req, res) => {
+router.put("/api/admin/wallets/:userEmail", authenticateAdmin, async (req, res) => {
   const { userEmail } = req.params;
   const { balance, onhold, tokens } = req.body;
   
@@ -1208,7 +1208,7 @@ router.put("/api/admin/wallets/:userEmail", async (req, res) => {
 });
 
 // Add funds to wallet
-router.post("/api/admin/wallets/:userEmail/add-funds", async (req, res) => {
+router.post("/api/admin/wallets/:userEmail/add-funds", authenticateAdmin, async (req, res) => {
   const { userEmail } = req.params;
   const { amount, reason, notes } = req.body;
   
@@ -1242,7 +1242,7 @@ router.post("/api/admin/wallets/:userEmail/add-funds", async (req, res) => {
 });
 
 // Add tokens to wallet
-router.post("/api/admin/wallets/:userEmail/add-tokens", async (req, res) => {
+router.post("/api/admin/wallets/:userEmail/add-tokens", authenticateAdmin, async (req, res) => {
   const { userEmail } = req.params;
   const { amount, reason, notes } = req.body;
   
@@ -1276,7 +1276,7 @@ router.post("/api/admin/wallets/:userEmail/add-tokens", async (req, res) => {
 });
 
 // Get gift transactions
-router.get("/api/admin/gifts", async (req, res) => {
+router.get("/api/admin/gifts", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT t.*, u.email as user_email
@@ -1293,7 +1293,7 @@ router.get("/api/admin/gifts", async (req, res) => {
 });
 
 // Update admin settings
-router.put("/api/admin/settings", async (req, res) => {
+router.put("/api/admin/settings", authenticateAdmin, async (req, res) => {
   const { freeTokenInterval, tokenPrice } = req.body;
   
   try {
