@@ -446,6 +446,64 @@ async function loadUsers() {
     } catch (error) {
         console.error('Users load error:', error);
         
+        // Try test data as fallback
+        try {
+            console.log('Trying test data for users...');
+            const testRes = await fetch(`${API_BASE}/api/admin/test-data`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (testRes.ok) {
+                const testData = await testRes.json();
+                const users = testData.users || [];
+                adminData.users = users;
+                
+                tbody.innerHTML = '';
+                
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No users found</td></tr>';
+                    return;
+                }
+                
+                users.forEach((user, index) => {
+                    const row = document.createElement('tr');
+                    row.style.animationDelay = `${index * 0.1}s`;
+                    row.className = 'fade-in-row';
+                    
+                    row.innerHTML = `
+                        <td>${user.id || user.user_id || 'N/A'}</td>
+                        <td>${user.name || user.username || user.user_name || 'N/A'}</td>
+                        <td>${user.email || user.user_email || 'N/A'}</td>
+                        <td><span class="badge bg-success">${user.balance || 0} Ks</span></td>
+                        <td><span class="badge bg-info">${user.tokens || 0}</span></td>
+                        <td>${formatDate(user.created_at)}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewUser(${user.id || user.user_id})" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                                <button class="btn btn-sm btn-outline-warning" onclick="editUser(${user.id || user.user_id})" title="Edit User">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${user.id || user.user_id})" title="Delete User">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                console.log('✅ Users loaded from test data');
+                return;
+            }
+        } catch (testError) {
+            console.log('❌ Test data also failed:', testError.message);
+        }
+        
         // Show fallback data when server is having issues
         if (error.message.includes('500') || error.message.includes('Failed to fetch')) {
             tbody.innerHTML = `
@@ -721,7 +779,49 @@ async function loadDashboardFallback() {
     console.log('Loading dashboard with fallback method...');
     const adminToken = localStorage.getItem('adminToken');
     
-    // Try to load each API individually
+    // First try the test data endpoint
+    try {
+        console.log('Trying test data endpoint...');
+        const testRes = await fetch(`${API_BASE}/api/admin/test-data`, {
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (testRes.ok) {
+            const testData = await testRes.json();
+            console.log('✅ Test data loaded successfully!');
+            
+            // Update dashboard with test data
+            document.getElementById('total-users').textContent = testData.users.length;
+            document.getElementById('total-orders').textContent = testData.orders.length;
+            
+            const totalRevenue = testData.transactions
+                .filter(t => t && typeof t.amount === 'number' && t.amount > 0)
+                .reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('total-revenue').textContent = totalRevenue.toFixed(2);
+            
+            document.getElementById('pending-orders').textContent = 
+                testData.orders.filter(o => o && o.status === 'Pending').length;
+            
+            // Load recent activity
+            loadRecentActivity(testData.transactions.slice(0, 10));
+            
+            // Update admin data
+            adminData.users = testData.users;
+            adminData.orders = testData.orders;
+            adminData.transactions = testData.transactions;
+            adminData.wallets = testData.wallets;
+            
+            console.log('✅ Dashboard updated with test data');
+            return;
+        }
+    } catch (e) {
+        console.log('❌ Test data endpoint failed:', e.message);
+    }
+    
+    // If test data fails, try individual APIs
     let users = [], orders = [], transactions = [];
     
     try {

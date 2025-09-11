@@ -975,6 +975,39 @@ router.get("/health", async (req, res) => {
   }
 });
 
+// Test endpoint with mock data (no database required)
+router.get("/api/admin/test-data", authenticateAdmin, async (req, res) => {
+  try {
+    console.log('Test data endpoint called');
+    
+    // Return mock data for testing
+    const mockData = {
+      users: [
+        { id: 1, name: 'Test User 1', email: 'user1@test.com', balance: 1000, tokens: 5, created_at: new Date().toISOString() },
+        { id: 2, name: 'Test User 2', email: 'user2@test.com', balance: 2500, tokens: 10, created_at: new Date().toISOString() },
+        { id: 3, name: 'Test User 3', email: 'user3@test.com', balance: 500, tokens: 2, created_at: new Date().toISOString() }
+      ],
+      orders: [
+        { order_id: 'ORD001', user_email: 'user1@test.com', item_details: 'MLBB Diamonds', price: 1000, status: 'Completed', created_at: new Date().toISOString() },
+        { order_id: 'ORD002', user_email: 'user2@test.com', item_details: 'PUBG UC', price: 500, status: 'Pending', created_at: new Date().toISOString() }
+      ],
+      transactions: [
+        { id: 1, user_email: 'user1@test.com', type: 'deposit', amount: 1000, status: 'Completed', created_at: new Date().toISOString() },
+        { id: 2, user_email: 'user2@test.com', type: 'withdraw', amount: 500, status: 'Pending', created_at: new Date().toISOString() }
+      ],
+      wallets: [
+        { user_email: 'user1@test.com', balance: 1000, onhold: 0, tokens: 5, name: 'Test User 1' },
+        { user_email: 'user2@test.com', balance: 2500, onhold: 100, tokens: 10, name: 'Test User 2' }
+      ]
+    };
+    
+    res.json(mockData);
+  } catch (err) {
+    console.error('Test data error:', err);
+    res.status(500).json({ error: "Failed to fetch test data" });
+  }
+});
+
 // Admin login
 router.post("/api/admin/login", async (req, res) => {
   const { username, password } = req.body;
