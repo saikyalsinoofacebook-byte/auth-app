@@ -58,15 +58,7 @@
                 </li>
                 <li class="menu-item" data-page="wallets">
                     <i class="bi bi-wallet2"></i>
-                    <span>Wallet Management</span>
-                </li>
-                <li class="menu-item" data-page="gifts">
-                    <i class="bi bi-gift"></i>
-                    <span>Gift System</span>
-                </li>
-                <li class="menu-item" data-page="settings">
-                    <i class="bi bi-gear"></i>
-                    <span>Settings</span>
+                    <span>Wallets</span>
                 </li>
             </ul>
         </div>
@@ -121,20 +113,12 @@
                 </div>
 
                 <!-- Recent Activity -->
-                <div class="dashboard-section">
+                <div class="recent-activity">
                     <h4><i class="bi bi-clock-history"></i> Recent Activity</h4>
-                    <div class="activity-list" id="recent-activity">
+                    <div id="recent-activity-list">
                         <div class="activity-item">
-                            <div class="activity-icon transaction">
-                                <i class="bi bi-arrow-down-circle"></i>
-                            </div>
-                            <div class="activity-content">
-                                <h6>System initialized</h6>
-                                <p>Loading activities...</p>
-                            </div>
-                            <div class="activity-time">
-                                Just now
-                            </div>
+                            <div class="loading"></div>
+                            <span>Loading recent activity...</span>
                         </div>
                     </div>
                 </div>
@@ -145,13 +129,13 @@
                 <div class="page-header">
                     <h2><i class="bi bi-people"></i> User Management</h2>
                     <div class="header-actions">
-                        <button class="btn btn-outline-secondary" onclick="exportUsers()">
+                        <button class="btn btn-outline-primary" onclick="exportUsers()">
                             <i class="bi bi-download"></i> Export
                         </button>
                         <button class="btn btn-primary" onclick="loadUsers()">
-                        <i class="bi bi-arrow-clockwise"></i> Refresh
-                    </button>
-                </div>
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- User Search and Filters -->
@@ -183,27 +167,28 @@
 
                 <div class="table-container">
                     <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Email</th>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
                                     <th>Balance (Ks)</th>
-                                <th>Tokens</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-table">
+                                    <th>Tokens</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table">
                                 <tr>
                                     <td colspan="7" class="text-center">
                                         <div class="loading"></div>
                                         Loading users...
                                     </td>
                                 </tr>
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 
                 <!-- Pagination -->
@@ -215,7 +200,7 @@
                         <li class="page-item active">
                             <a class="page-link" href="#">1</a>
                         </li>
-                        <li class="page-item">
+                        <li class="page-item disabled">
                             <a class="page-link" href="#">Next</a>
                         </li>
                     </ul>
@@ -227,14 +212,7 @@
                 <div class="page-header">
                     <h2><i class="bi bi-bag"></i> Order Management</h2>
                     <div class="header-actions">
-                        <select class="form-select" id="order-status-filter">
-                            <option value="">All Status</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Cancelled">Cancelled</option>
-                            <option value="Processing">Processing</option>
-                        </select>
-                        <button class="btn btn-outline-secondary" onclick="exportOrders()">
+                        <button class="btn btn-outline-primary" onclick="exportOrders()">
                             <i class="bi bi-download"></i> Export
                         </button>
                         <button class="btn btn-primary" onclick="loadOrders()">
@@ -242,46 +220,31 @@
                         </button>
                     </div>
                 </div>
-                
-                <!-- Date Filter -->
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label>From Date</label>
-                        <input type="date" class="form-control" id="order-date-from">
-                    </div>
-                    <div class="col-md-4">
-                        <label>To Date</label>
-                        <input type="date" class="form-control" id="order-date-to">
-                    </div>
-                    <div class="col-md-4">
-                        <label>Search</label>
-                        <input type="text" class="form-control" id="order-search" placeholder="Search orders...">
-                    </div>
-                </div>
 
                 <div class="table-container">
                     <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                    <th>User Email</th>
-                                    <th>Item Details</th>
-                                    <th>Price (Ks)</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orders-table">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>User</th>
+                                    <th>Product</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table">
                                 <tr>
                                     <td colspan="7" class="text-center">
                                         <div class="loading"></div>
                                         Loading orders...
                                     </td>
                                 </tr>
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -296,515 +259,411 @@
                             <option value="withdraw">Withdraw</option>
                             <option value="order">Order Payment</option>
                             <option value="gift">Gift Prize</option>
-                            <option value="refund">Refund</option>
                         </select>
-                        <select class="form-select" id="transaction-status-filter">
-                            <option value="">All Status</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Cancelled">Cancelled</option>
-                            <option value="Failed">Failed</option>
-                        </select>
-                        <button class="btn btn-outline-secondary" onclick="exportTransactions()">
-                            <i class="bi bi-download"></i> Export
-                        </button>
                         <button class="btn btn-primary" onclick="loadTransactions()">
                             <i class="bi bi-arrow-clockwise"></i> Refresh
                         </button>
                     </div>
                 </div>
-                
-                <!-- Transaction Filters -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <label>Min Amount</label>
-                        <input type="number" class="form-control" id="transaction-min-amount" placeholder="Min amount">
-                    </div>
-                    <div class="col-md-3">
-                        <label>Max Amount</label>
-                        <input type="number" class="form-control" id="transaction-max-amount" placeholder="Max amount">
-                    </div>
-                    <div class="col-md-3">
-                        <label>From Date</label>
-                        <input type="date" class="form-control" id="transaction-date-from">
-                    </div>
-                    <div class="col-md-3">
-                        <label>To Date</label>
-                        <input type="date" class="form-control" id="transaction-date-to">
-                    </div>
-                </div>
 
                 <div class="table-container">
                     <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>User</th>
-                                <th>Type</th>
-                                    <th>Amount (Ks)</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactions-table">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>User</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-table">
                                 <tr>
                                     <td colspan="7" class="text-center">
                                         <div class="loading"></div>
                                         Loading transactions...
                                     </td>
                                 </tr>
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <!-- Wallet Management Page -->
-            <div id="wallet-page" class="page-content">
+            <div id="wallets-page" class="page-content">
                 <div class="page-header">
                     <h2><i class="bi bi-wallet2"></i> Wallet Management</h2>
                     <div class="header-actions">
                         <button class="btn btn-outline-success" onclick="showBulkAddFunds()">
                             <i class="bi bi-plus-circle"></i> Bulk Add Funds
                         </button>
+                        <button class="btn btn-outline-info" onclick="showBulkAddTokens()">
+                            <i class="bi bi-plus-circle"></i> Bulk Add Tokens
+                        </button>
                         <button class="btn btn-primary" onclick="loadWallets()">
-                        <i class="bi bi-arrow-clockwise"></i> Refresh
-                    </button>
-                </div>
-                </div>
-                
-                <!-- Wallet Summary -->
-                <div class="row mb-3">
-                    <div class="col-md-3">
-                        <div class="card text-white bg-primary mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title">Total Balance</h6>
-                                <h3 id="total-wallet-balance">0 Ks</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-white bg-success mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title">Available Balance</h6>
-                                <h3 id="total-available-balance">0 Ks</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-white bg-warning mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title">On Hold Balance</h6>
-                                <h3 id="total-onhold-balance">0 Ks</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-white bg-info mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title">Total Tokens</h6>
-                                <h3 id="total-tokens">0</h3>
-                            </div>
-                        </div>
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
                     </div>
                 </div>
 
                 <div class="table-container">
                     <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
                                     <th>User</th>
-                                    <th>Total Balance (Ks)</th>
+                                    <th>Total (Ks)</th>
                                     <th>Available (Ks)</th>
                                     <th>On Hold (Ks)</th>
-                                <th>Tokens</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="wallets-table">
+                                    <th>Tokens</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="wallets-table">
                                 <tr>
                                     <td colspan="6" class="text-center">
                                         <div class="loading"></div>
                                         Loading wallets...
                                     </td>
                                 </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Gift System Page -->
-            <div id="gifts-page" class="page-content">
-                <div class="page-header">
-                    <h2><i class="bi bi-gift"></i> Gift System Management</h2>
-                    <div class="header-actions">
-                        <button class="btn btn-outline-info" onclick="showGiftStats()">
-                            <i class="bi bi-graph-up"></i> Statistics
-                        </button>
-                        <button class="btn btn-primary" onclick="loadGifts()">
-                        <i class="bi bi-arrow-clockwise"></i> Refresh
-                    </button>
-                </div>
-                </div>
-                
-                <div class="gift-stats">
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #8b5cf6;">
-                            <i class="bi bi-arrow-repeat"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3 id="total-spins">0</h3>
-                            <p>Total Spins Today</p>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #06b6d4;">
-                            <i class="bi bi-coin"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3 id="total-tokens-used">0</h3>
-                            <p>Tokens Used Today</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #10b981;">
-                            <i class="bi bi-cash-coin"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3 id="total-prizes-won">0 Ks</h3>
-                            <p>Prizes Won Today</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon" style="background: #f59e0b;">
-                            <i class="bi bi-trophy"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3 id="biggest-prize">0 Ks</h3>
-                            <p>Biggest Prize Today</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-container">
-                    <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>User Email</th>
-                                <th>Prize</th>
-                                    <th>Amount (Ks)</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="gifts-table">
-                                <tr>
-                                    <td colspan="6" class="text-center">
-                                        <div class="loading"></div>
-                                        Loading gift transactions...
-                                    </td>
-                                </tr>
-                        </tbody>
-                    </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Settings Page -->
-            <div id="settings-page" class="page-content">
-                <div class="page-header">
-                    <h2><i class="bi bi-gear"></i> System Settings</h2>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                <div class="settings-section">
-                            <h4><i class="bi bi-gift"></i> Gift System Settings</h4>
-                    <div class="form-group">
-                        <label>Free Token Interval (hours)</label>
-                                <input type="number" class="form-control" id="free-token-interval" value="24" min="1" max="168">
-                                <small class="text-muted">Time between free token claims</small>
-                    </div>
-                    <div class="form-group">
-                        <label>Token Price (Ks)</label>
-                                <input type="number" class="form-control" id="token-price" value="500" min="100" step="100">
-                                <small class="text-muted">Price for purchasing additional tokens</small>
-                            </div>
-                            <div class="form-group">
-                                <label>Max Tokens Per User</label>
-                                <input type="number" class="form-control" id="max-tokens" value="10" min="1" max="100">
-                                <small class="text-muted">Maximum tokens a user can hold</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="settings-section">
-                            <h4><i class="bi bi-wallet2"></i> Wallet Settings</h4>
-                            <div class="form-group">
-                                <label>Minimum Deposit (Ks)</label>
-                                <input type="number" class="form-control" id="min-deposit" value="1000" min="100" step="100">
-                                <small class="text-muted">Minimum amount for deposits</small>
-                            </div>
-                            <div class="form-group">
-                                <label>Maximum Deposit (Ks)</label>
-                                <input type="number" class="form-control" id="max-deposit" value="1000000" min="1000" step="1000">
-                                <small class="text-muted">Maximum amount for deposits</small>
-                            </div>
-                            <div class="form-group">
-                                <label>Minimum Withdrawal (Ks)</label>
-                                <input type="number" class="form-control" id="min-withdrawal" value="5000" min="1000" step="1000">
-                                <small class="text-muted">Minimum amount for withdrawals</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <div class="settings-section">
-                            <h4><i class="bi bi-shield-check"></i> Security Settings</h4>
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="enable-2fa" checked>
-                                <label class="form-check-label" for="enable-2fa">Enable Two-Factor Authentication</label>
-                            </div>
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="enable-logging" checked>
-                                <label class="form-check-label" for="enable-logging">Enable Activity Logging</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="auto-logout" checked>
-                                <label class="form-check-label" for="auto-logout">Auto Logout (30 minutes inactivity)</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mt-3">
-                    <div class="col-12 text-center">
-                        <button class="btn btn-primary btn-lg" onclick="saveSettings()">
-                            <i class="bi bi-check-circle"></i> Save All Settings
-                        </button>
-                        <button class="btn btn-outline-secondary btn-lg ms-2" onclick="resetSettings()">
-                            <i class="bi bi-arrow-clockwise"></i> Reset to Default
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modals -->
-    <div class="modal fade" id="actionModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Action</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="modalBody">
-                    <!-- Dynamic content -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="modalConfirm">Confirm</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
         <div class="loading-content">
             <div class="loading-spinner"></div>
-            <p>Processing...</p>
+            <p>Loading...</p>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Error</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="error-message">An error occurred</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="retryOperation()">Retry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="admin.js"></script>
     
     <script>
-         // Authentication check and initialization
-         document.addEventListener('DOMContentLoaded', function() {
-             console.log('Admin panel loading...');
-             const adminToken = localStorage.getItem('adminToken');
-             
-             if (!adminToken) {
-                 console.log('No admin token found, redirecting to login');
-                 window.location.href = 'login.html';
-                 return;
-             }
-             
-             console.log('Admin token found, verifying...');
-             
-             // Verify token with better error handling
-             verifyAdminToken(adminToken).then(isValid => {
-                 console.log('Token verification result:', isValid);
-                 
-                 if (!isValid) {
-                     console.log('Token invalid, redirecting to login');
-                     localStorage.removeItem('adminToken');
-                     window.location.href = 'login.html';
-                     return;
-                 }
-                 
-                 // Initialize admin panel after successful authentication
-                 console.log('Admin authenticated successfully, initializing panel');
-                 initializeAdminPanel();
-                 
-             }).catch(error => {
-                 console.error('Authentication error:', error);
-                 localStorage.removeItem('adminToken');
-                 window.location.href = 'login.html';
-             });
-         });
-
-         // Enhanced token verification function
-         async function verifyAdminToken(token) {
-             try {
-                 console.log('Verifying token:', token.substring(0, 20) + '...');
-                 
-                 const response = await fetch('https://arthur-game-shop.onrender.com/api/admin/verify', {
-                     method: 'GET',
-                     headers: { 
-                         'Authorization': `Bearer ${token}`,
-                         'Content-Type': 'application/json'
-                     }
-                 });
-                 
-                 console.log('Verification response status:', response.status);
-                 
-                 if (!response.ok) {
-                     if (response.status === 401 || response.status === 403) {
-                         console.log('Token verification failed - unauthorized');
-                         return false;
-                     }
-                     throw new Error(`HTTP error! status: ${response.status}`);
-                 }
-                 
-                 const data = await response.json();
-                 console.log('Verification response data:', data);
-                 
-                 const isValid = data.valid === true || data.success === true;
-                 console.log('Token is valid:', isValid);
-                 
-                 return isValid;
-                 
-             } catch (error) {
-                 console.error('Token verification failed:', error);
-                 return false;
-             }
-         }
-
-        // Show loading overlay
-        function showLoading() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
-        }
-
-        // Hide loading overlay
-        function hideLoading() {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
-
-        // Export functions (placeholder implementations)
-        function exportUsers() {
-            showLoading();
-            setTimeout(() => {
-                hideLoading();
-                alert('User export feature will be implemented soon');
-            }, 1000);
-        }
-
-        function exportOrders() {
-            showLoading();
-            setTimeout(() => {
-                hideLoading();
-                alert('Order export feature will be implemented soon');
-            }, 1000);
-        }
-
-        function exportTransactions() {
-            showLoading();
-            setTimeout(() => {
-                hideLoading();
-                alert('Transaction export feature will be implemented soon');
-            }, 1000);
-        }
-
-        // Filter functions (placeholder implementations)
-        function filterUsers() {
-            const searchTerm = document.getElementById('user-search').value.toLowerCase();
-            const rows = document.querySelectorAll('#users-table tr');
+        // Global variables
+        let adminData = {
+            users: [],
+            orders: [],
+            transactions: [],
+            wallets: []
+        };
+        
+        let currentOperation = null;
+        let adminPanelLoaded = false;
+        let inactivityTimer = null;
+        
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Admin panel loading...');
             
-            rows.forEach(row => {
-                if (row.querySelector('td')) {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+            // Check if admin token exists
+            const adminToken = localStorage.getItem('adminToken');
+            if (!adminToken) {
+                console.log('No admin token found, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Verify token with server
+            verifyAdminToken(adminToken);
+        });
+        
+        // Verify admin token
+        async function verifyAdminToken(token) {
+            try {
+                console.log('Verifying admin token...');
+                const response = await fetch('/api/admin/verify', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Verification response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Verification response data:', data);
+                    console.log('Token is valid:', data.valid);
+                    
+                    if (data.valid) {
+                        initializeAdminPanel();
+                    } else {
+                        console.log('Invalid token, redirecting to login');
+                        localStorage.removeItem('adminToken');
+                        window.location.href = 'login.html';
+                    }
+                } else {
+                    console.log('Token verification failed, redirecting to login');
+                    localStorage.removeItem('adminToken');
+                    window.location.href = 'login.html';
                 }
-            });
-        }
-
-        // Bulk operations (placeholder implementations)
-        function showBulkAddFunds() {
-            alert('Bulk add funds feature will be implemented soon');
-        }
-
-        function showGiftStats() {
-            alert('Gift statistics feature will be implemented soon');
-        }
-
-        // Settings functions (placeholder implementations)
-        function resetSettings() {
-            if (confirm('Are you sure you want to reset all settings to default?')) {
-                document.getElementById('free-token-interval').value = '24';
-                document.getElementById('token-price').value = '500';
-                document.getElementById('max-tokens').value = '10';
-                document.getElementById('min-deposit').value = '1000';
-                document.getElementById('max-deposit').value = '1000000';
-                document.getElementById('min-withdrawal').value = '5000';
-                alert('Settings reset to default values');
+            } catch (error) {
+                console.log('Token verification error:', error);
+                // If server is down, still allow access with fallback data
+                console.log('Server unavailable, using fallback mode');
+                initializeAdminPanel();
             }
         }
-
-         // Auto-logout for inactivity (only after admin panel is loaded)
-         let inactivityTimer;
-         let adminPanelLoaded = false;
-         
-         function resetInactivityTimer() {
-             if (!adminPanelLoaded) return; // Don't start timer until panel is loaded
-             
-             clearTimeout(inactivityTimer);
-             inactivityTimer = setTimeout(() => {
-                 if (document.getElementById('auto-logout')?.checked) {
-                     if (confirm('Your session will expire due to inactivity. Do you want to stay logged in?')) {
-                         resetInactivityTimer(); // Reset timer if user wants to stay
-                     } else {
-                         alert('Session expired due to inactivity');
-                         logout();
-                     }
-                 }
-             }, 60 * 60 * 1000); // 60 minutes
-         }
-
-         // Reset timer on user activity (only after panel is loaded)
-         document.addEventListener('mousemove', () => {
-             if (adminPanelLoaded) resetInactivityTimer();
-         });
-         document.addEventListener('keypress', () => {
-             if (adminPanelLoaded) resetInactivityTimer();
-         });
-         
-         // Start timer only after admin panel is fully loaded
-         function startInactivityTimer() {
-             adminPanelLoaded = true;
-             resetInactivityTimer();
-         }
+        
+        // Initialize admin panel
+        function initializeAdminPanel() {
+            console.log('Initializing admin panel...');
+            
+            // Setup event listeners
+            setupEventListeners();
+            setupMobileMenu();
+            
+            // Load dashboard data
+            loadDashboard();
+            
+            // Mark as loaded
+            adminPanelLoaded = true;
+            
+            console.log('Admin panel initialized successfully');
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Menu item clicks
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const page = this.getAttribute('data-page');
+                    console.log('Menu item clicked:', page);
+                    switchPage(page);
+                });
+            });
+            
+            // Search input
+            const userSearch = document.getElementById('user-search');
+            if (userSearch) {
+                userSearch.addEventListener('input', filterUsers);
+            }
+            
+            // Sort and filter dropdowns
+            const userSort = document.getElementById('user-sort');
+            const userFilter = document.getElementById('user-filter');
+            if (userSort) userSort.addEventListener('change', filterUsers);
+            if (userFilter) userFilter.addEventListener('change', filterUsers);
+            
+            // Transaction type filter
+            const transactionFilter = document.getElementById('transaction-type-filter');
+            if (transactionFilter) {
+                transactionFilter.addEventListener('change', filterTransactions);
+            }
+        }
+        
+        // Setup mobile menu
+        function setupMobileMenu() {
+            console.log('Setting up mobile menu...');
+            
+            // Mobile menu toggle
+            window.toggleMobileMenu = function() {
+                const sidebar = document.getElementById('adminSidebar');
+                const overlay = document.querySelector('.mobile-menu-overlay');
+                
+                if (sidebar && overlay) {
+                    sidebar.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                }
+            };
+            
+            // Close mobile menu
+            window.closeMobileMenu = function() {
+                const sidebar = document.getElementById('adminSidebar');
+                const overlay = document.querySelector('.mobile-menu-overlay');
+                
+                if (sidebar && overlay) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                }
+            };
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    closeMobileMenu();
+                }
+            });
+            
+            console.log('Mobile menu setup complete');
+        }
+        
+        // Switch page
+        function switchPage(page) {
+            console.log('Switching to page:', page);
+            
+            // Remove active class from all menu items
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to clicked menu item
+            const activeMenuItem = document.querySelector(`[data-page="${page}"]`);
+            if (activeMenuItem) {
+                activeMenuItem.classList.add('active');
+            }
+            
+            // Hide all page content
+            document.querySelectorAll('.page-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Show selected page
+            const pageContent = document.getElementById(`${page}-page`);
+            if (pageContent) {
+                pageContent.classList.add('active');
+            }
+            
+            // Load page data
+            switch(page) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'users':
+                    loadUsers();
+                    break;
+                case 'orders':
+                    loadOrders();
+                    break;
+                case 'transactions':
+                    loadTransactions();
+                    break;
+                case 'wallets':
+                    loadWallets();
+                    break;
+            }
+        }
+        
+        // Show loading overlay
+        function showLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
+        }
+        
+        // Hide loading overlay
+        function hideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+        }
+        
+        // Show error modal
+        function showError(message) {
+            const errorMessage = document.getElementById('error-message');
+            if (errorMessage) {
+                errorMessage.textContent = message;
+            }
+            
+            const errorModal = new bootstrap.Modal(document.getElementById('error-modal'));
+            errorModal.show();
+        }
+        
+        // Retry operation
+        function retryOperation() {
+            if (currentOperation) {
+                currentOperation();
+            }
+        }
+        
+        // Logout function
+        function logout() {
+            localStorage.removeItem('adminToken');
+            window.location.href = 'login.html';
+        }
+        
+        // Export functions
+        function exportUsers() {
+            alert('Export users functionality will be implemented');
+        }
+        
+        function exportOrders() {
+            alert('Export orders functionality will be implemented');
+        }
+        
+        // Mobile menu functions
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            }
+        }
+        
+        function closeMobileMenu() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            
+            if (sidebar && overlay) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        }
+        
+        // Inactivity timer
+        function resetInactivityTimer() {
+            if (inactivityTimer) {
+                clearTimeout(inactivityTimer);
+            }
+            
+            inactivityTimer = setTimeout(() => {
+                if (confirm('You have been inactive for 60 minutes. Do you want to stay logged in?')) {
+                    resetInactivityTimer();
+                } else {
+                    logout();
+                }
+            }, 60 * 60 * 1000); // 60 minutes
+        }
+        
+        // Start inactivity timer
+        function startInactivityTimer() {
+            if (adminPanelLoaded) {
+                resetInactivityTimer();
+            }
+        }
+        
+        // Add event listeners for inactivity
+        document.addEventListener('mousemove', () => {
+            if (adminPanelLoaded) resetInactivityTimer();
+        });
+        document.addEventListener('keypress', () => {
+            if (adminPanelLoaded) resetInactivityTimer();
+        });
     </script>
     
     <style>
@@ -839,20 +698,15 @@
             margin: 0 auto 1rem;
         }
         
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         .card {
             border: none;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .form-switch .form-check-input {
-            width: 3em;
-            height: 1.5em;
-        }
-        
-        .table-responsive {
-            border-radius: 10px;
-            overflow: hidden;
         }
         
         .pagination {
