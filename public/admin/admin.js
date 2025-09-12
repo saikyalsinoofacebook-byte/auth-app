@@ -982,8 +982,11 @@ async function updateUser(userId, balance, tokens) {
 
 // View order details
 function viewOrder(orderId) {
-    const order = adminData.orders.find(o => o.order_id === orderId);
-    if (!order) return;
+    const order = adminData.orders.find(o => o.id == orderId || o.order_id === orderId);
+    if (!order) {
+        showNotification('Order not found', 'error');
+        return;
+    }
     
     const modalBody = `
         <div class="row">
@@ -1018,8 +1021,11 @@ function viewOrder(orderId) {
 
 // Edit order
 function editOrder(orderId) {
-    const order = adminData.orders.find(o => o.order_id === orderId);
-    if (!order) return;
+    const order = adminData.orders.find(o => o.id == orderId || o.order_id === orderId);
+    if (!order) {
+        showNotification('Order not found', 'error');
+        return;
+    }
     
     const modalBody = `
         <form id="editOrderForm">
@@ -1082,31 +1088,53 @@ async function updateOrder(orderId, status, price, gameId, serverId) {
 }
 
 function approveOrder(orderId) {
+    const order = adminData.orders.find(o => o.id == orderId || o.order_id === orderId);
+    if (!order) {
+        showNotification('Order not found', 'error');
+        return;
+    }
+    
     const modalBody = `
         <div class="text-center">
             <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
             <h5 class="mt-3">Approve Order</h5>
-        <p>Are you sure you want to approve this order?</p>
-        <p><strong>Order ID:</strong> ${orderId}</p>
+            <p>Are you sure you want to approve this order?</p>
+            <p><strong>Order ID:</strong> ${order.order_id || order.id}</p>
+            <p><strong>User:</strong> ${order.user_email}</p>
+            <p><strong>Item:</strong> ${order.item}</p>
+            <p><strong>Amount:</strong> ${order.price} Ks</p>
         </div>
     `;
     
     showModal('Approve Order', modalBody, () => {
         document.getElementById('modalConfirm').onclick = () => {
-            updateOrderStatus(orderId, 'Completed');
+            updateOrderStatus(orderId, 'completed');
         };
     });
 }
 
 function rejectOrder(orderId) {
+    const order = adminData.orders.find(o => o.id == orderId || o.order_id === orderId);
+    if (!order) {
+        showNotification('Order not found', 'error');
+        return;
+    }
+    
     const modalBody = `
-        <p>Are you sure you want to reject this order?</p>
-        <p><strong>Order ID:</strong> ${orderId}</p>
+        <div class="text-center">
+            <i class="bi bi-x-circle text-danger" style="font-size: 3rem;"></i>
+            <h5 class="mt-3">Reject Order</h5>
+            <p>Are you sure you want to reject this order?</p>
+            <p><strong>Order ID:</strong> ${order.order_id || order.id}</p>
+            <p><strong>User:</strong> ${order.user_email}</p>
+            <p><strong>Item:</strong> ${order.item}</p>
+            <p><strong>Amount:</strong> ${order.price} Ks</p>
+        </div>
     `;
     
     showModal('Reject Order', modalBody, () => {
         document.getElementById('modalConfirm').onclick = () => {
-            updateOrderStatus(orderId, 'Cancelled');
+            updateOrderStatus(orderId, 'cancelled');
         };
     });
 }
@@ -1123,21 +1151,31 @@ async function updateOrderStatus(orderId, status) {
         });
         
         if (response.ok) {
-            alert(`Order ${status.toLowerCase()} successfully`);
-            loadOrders();
-            closeModal();
+            const data = await response.json();
+            if (data.success) {
+                showNotification(`Order ${status} successfully`, 'success');
+                loadOrders();
+                closeModal();
+            } else {
+                showNotification(data.error || 'Failed to update order', 'error');
+            }
         } else {
-            alert('Update failed: ' + (await response.text()));
+            const errorData = await response.json();
+            showNotification(errorData.error || 'Failed to update order', 'error');
         }
     } catch (error) {
-        alert('Update error: ' + error.message);
+        console.error('Update order error:', error);
+        showNotification('Error updating order: ' + error.message, 'error');
     }
 }
 
 // View transaction details
 function viewTransaction(transactionId) {
-    const transaction = adminData.transactions.find(t => t.id === transactionId);
-    if (!transaction) return;
+    const transaction = adminData.transactions.find(t => t.id == transactionId);
+    if (!transaction) {
+        showNotification('Transaction not found', 'error');
+        return;
+    }
     
     const typeInfo = getTransactionTypeInfo(transaction.type);
     
@@ -1744,27 +1782,59 @@ function filterTransactions() {
 
 // Admin CRUD Functions
 function viewUser(userId) {
-    const user = adminData.users.find(u => u.id == userId);
-    if (user) {
+    // Fetch full user details from server
+    fetch(`${API_BASE}/api/admin/users/${userId}`, {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        }
+    })
+    .then(response => response.json())
+    .then(user => {
+        if (user.error) {
+            showNotification('Failed to load user details: ' + user.error, 'error');
+            return;
+        }
+        
         const modal = createUserModal(user, 'view');
         document.body.appendChild(modal);
         const bsModal = new bootstrap.Modal(modal);
         bsModal.show();
-    } else {
-        alert('User not found');
-    }
+    })
+    .catch(error => {
+        console.error('Load user error:', error);
+        showNotification('Error loading user details', 'error');
+    });
 }
 
 function editUser(userId) {
-    const user = adminData.users.find(u => u.id == userId);
-    if (user) {
-        const modal = createUserModal(user, 'edit');
+    // Fetch full user details from server
+    fetch(`${API_BASE}/api/admin/users/${userId}`, {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        }
+    })
+    .then(response => response.json())
+    .then(user => {
+        if (user.error) {
+            showNotification('Failed to load user details: ' + user.error, 'error');
+            return;
+        }
+        
+        // Add password placeholder for editing
+        const userWithPassword = {
+            ...user,
+            password: '' // Empty for editing - user can enter new password
+        };
+        
+        const modal = createUserModal(userWithPassword, 'edit');
         document.body.appendChild(modal);
         const bsModal = new bootstrap.Modal(modal);
         bsModal.show();
-    } else {
-        alert('User not found');
-    }
+    })
+    .catch(error => {
+        console.error('Load user error:', error);
+        showNotification('Error loading user details', 'error');
+    });
 }
 
 function deleteUser(userId) {
@@ -1793,53 +1863,9 @@ function deleteUser(userId) {
     }
 }
 
-function viewOrder(orderId) {
-    const order = adminData.orders.find(o => o.id == orderId);
-    if (order) {
-        const modal = createOrderModal(order, 'view');
-        document.body.appendChild(modal);
-        const bsModal = new bootstrap.Modal(modal);
-        bsModal.show();
-    } else {
-        alert('Order not found');
-    }
-}
+// These functions are now handled by the modal-based functions above
 
-function editOrder(orderId) {
-    const order = adminData.orders.find(o => o.id == orderId);
-    if (order) {
-        const modal = createOrderModal(order, 'edit');
-        document.body.appendChild(modal);
-        const bsModal = new bootstrap.Modal(modal);
-        bsModal.show();
-    } else {
-        alert('Order not found');
-    }
-}
-
-function viewTransaction(transactionId) {
-    const transaction = adminData.transactions.find(t => t.id == transactionId);
-    if (transaction) {
-        const modal = createTransactionModal(transaction, 'view');
-        document.body.appendChild(modal);
-        const bsModal = new bootstrap.Modal(modal);
-        bsModal.show();
-    } else {
-        alert('Transaction not found');
-    }
-}
-
-function editTransaction(transactionId) {
-    const transaction = adminData.transactions.find(t => t.id == transactionId);
-    if (transaction) {
-        const modal = createTransactionModal(transaction, 'edit');
-        document.body.appendChild(modal);
-        const bsModal = new bootstrap.Modal(modal);
-        bsModal.show();
-    } else {
-        alert('Transaction not found');
-    }
-}
+// These functions are now handled by the modal-based functions above
 
 function viewWallet(userEmail) {
     const wallet = adminData.wallets.find(w => w.user_email === userEmail || w.email === userEmail);
@@ -1924,7 +1950,7 @@ function createUserModal(user, mode) {
     const modal = document.createElement('div');
     modal.className = 'modal fade';
     modal.innerHTML = `
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">${mode === 'view' ? 'View' : 'Edit'} User</h5>
@@ -1932,21 +1958,55 @@ function createUserModal(user, mode) {
                 </div>
                 <div class="modal-body">
                     <form id="user-form">
-                        <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control" name="name" value="${user.name || ''}" ${mode === 'view' ? 'readonly' : ''}>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">User ID</label>
+                                    <input type="text" class="form-control" value="${user.id || ''}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Created Date</label>
+                                    <input type="text" class="form-control" value="${user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Name *</label>
+                                    <input type="text" class="form-control" name="name" value="${user.name || ''}" ${mode === 'view' ? 'readonly' : 'required'}>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Email *</label>
+                                    <input type="email" class="form-control" name="email" value="${user.email || ''}" ${mode === 'view' ? 'readonly' : 'required'}>
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" name="email" value="${user.email || ''}" ${mode === 'view' ? 'readonly' : ''}>
+                            <label class="form-label">Password ${mode === 'edit' ? '(leave blank to keep current)' : ''}</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password" id="password-field" ${mode === 'view' ? 'readonly' : ''} placeholder="${mode === 'edit' ? 'Enter new password or leave blank' : 'Password is hidden for security'}" value="${user.password || ''}">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()"><i class="bi bi-eye" id="password-toggle-icon"></i></button>
+                            </div>
+                            ${mode === 'view' ? '<small class="text-muted">Click the eye icon to show/hide password</small>' : '<small class="text-muted">Leave blank to keep current password</small>'}
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Balance (Ks)</label>
-                            <input type="number" class="form-control" name="balance" value="${user.balance || 0}" ${mode === 'view' ? 'readonly' : ''}>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Tokens</label>
-                            <input type="number" class="form-control" name="tokens" value="${user.tokens || 0}" ${mode === 'view' ? 'readonly' : ''}>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Balance (Ks)</label>
+                                    <input type="number" class="form-control" name="balance" value="${user.balance || 0}" ${mode === 'view' ? 'readonly' : ''} step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Tokens</label>
+                                    <input type="number" class="form-control" name="tokens" value="${user.tokens || 0}" ${mode === 'view' ? 'readonly' : ''}>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -2109,17 +2169,59 @@ function createWalletModal(wallet, mode) {
     return modal;
 }
 
+// Password toggle function
+function togglePassword() {
+    const passwordField = document.getElementById('password-field');
+    const toggleIcon = document.getElementById('password-toggle-icon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.className = 'bi bi-eye-slash';
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.className = 'bi bi-eye';
+    }
+}
+
 // Save functions
 function saveUser(userId) {
     const form = document.getElementById('user-form');
     const formData = new FormData(form);
     
+    // Validate required fields
+    const name = formData.get('name').trim();
+    const email = formData.get('email').trim();
+    const password = formData.get('password').trim();
+    
+    if (!name || !email) {
+        showNotification('Name and email are required', 'error');
+        return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showNotification('Please enter a valid email address', 'error');
+        return;
+    }
+    
     const userData = {
-        name: formData.get('name'),
-        email: formData.get('email'),
-        balance: parseFloat(formData.get('balance')),
-        tokens: parseInt(formData.get('tokens'))
+        name: name,
+        email: email,
+        balance: parseFloat(formData.get('balance')) || 0,
+        tokens: parseInt(formData.get('tokens')) || 0
     };
+    
+    // Only include password if provided
+    if (password) {
+        userData.password = password;
+    }
+    
+    // Show loading
+    const saveButton = document.querySelector('button[onclick="saveUser(' + userId + ')"]');
+    const originalText = saveButton.innerHTML;
+    saveButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+    saveButton.disabled = true;
     
     fetch(`${API_BASE}/api/admin/users/${userId}`, {
         method: 'PUT',
@@ -2136,12 +2238,17 @@ function saveUser(userId) {
             loadUsers(); // Reload users
             bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
         } else {
-            showNotification('Failed to update user', 'error');
+            showNotification(data.error || 'Failed to update user', 'error');
         }
     })
     .catch(error => {
         console.error('Update user error:', error);
-        showNotification('Error updating user', 'error');
+        showNotification('Error updating user: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Restore button
+        saveButton.innerHTML = originalText;
+        saveButton.disabled = false;
     });
 }
 

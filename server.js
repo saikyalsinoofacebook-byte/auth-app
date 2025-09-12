@@ -1055,6 +1055,30 @@ router.get("/api/admin/verify", async (req, res) => {
   }
 });
 
+// Get single user details (for editing)
+router.get("/api/admin/users/:id", authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const result = await pool.query(`
+      SELECT u.id, u.name, u.email, u.password, u.created_at, 
+             COALESCE(w.balance, 0) as balance, COALESCE(w.tokens, 0) as tokens
+      FROM users u
+      LEFT JOIN wallets w ON u.id = w.user_id
+      WHERE u.id = $1
+    `, [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Get user error:", err);
+    res.status(500).json({ error: "Failed to fetch user" });
+  }
+});
+
 // Get all users
 router.get("/api/admin/users", authenticateAdmin, async (req, res) => {
   try {
@@ -1119,27 +1143,44 @@ router.get("/api/admin/users", authenticateAdmin, async (req, res) => {
 // Update user
 router.put("/api/admin/users/:id", authenticateAdmin, async (req, res) => {
   const { id } = req.params;
-  const { balance, tokens } = req.body;
+  const { name, email, password, balance, tokens } = req.body;
   
   try {
-    // Get user email first
+    // Check if user exists
     const userRes = await pool.query("SELECT email FROM users WHERE id = $1", [id]);
     if (!userRes.rows.length) {
       return res.status(404).json({ error: "User not found" });
     }
     
-    const email = userRes.rows[0].email;
+    const oldEmail = userRes.rows[0].email;
     
-    // Update wallet
+    // Update user details
+    if (password) {
+      // Hash password if provided
+      const bcrypt = await import('bcrypt');
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await pool.query(
+        "UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4",
+        [name, email, hashedPassword, id]
+      );
+    } else {
+      // Update without password
+      await pool.query(
+        "UPDATE users SET name = $1, email = $2 WHERE id = $3",
+        [name, email, id]
+      );
+    }
+    
+    // Update wallet using the new email
     await pool.query(
-      "UPDATE wallets SET balance = $1, tokens = $2 WHERE user_email = $3",
-      [balance, tokens, email]
+      "UPDATE wallets SET user_email = $1, balance = $2, tokens = $3 WHERE user_email = $4",
+      [email, balance, tokens, oldEmail]
     );
     
-    res.json({ message: "User updated successfully" });
+    res.json({ success: true, message: "User updated successfully" });
   } catch (err) {
     console.error("Update user error:", err);
-    res.status(500).json({ error: "Failed to update user" });
+    res.status(500).json({ error: "Failed to update user", details: err.message });
   }
 });
 
