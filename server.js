@@ -92,6 +92,7 @@ app.post("/api/register", async (req, res) => {
       [user.id, user.name, user.email]
     );
 
+    console.log(`👤 NEW USER REGISTERED: ${email} - ${name}`);
     res.status(201).json({ message: "Registered", user });
   } catch (err) {
     console.error("Register error:", err);
@@ -111,6 +112,7 @@ app.post("/api/login", async (req, res) => {
     const user = r.rows[0];
     if (user.password !== password) return res.status(400).json({ error: "Invalid credentials" });
 
+    console.log(`🔑 USER LOGIN: ${email}`);
     res.json({ user: { id: user.id, name: user.name, email: user.email } });
   } catch (err) {
     console.error("Login error:", err);
@@ -239,6 +241,7 @@ app.post("/api/deposit", upload.single("screenshot"), async (req, res) => {
     );
 
     console.log("✅ Transaction created:", tx.rows[0]);
+    console.log(`💰 DEPOSIT REQUEST: ${user_email} - ${amount} Ks via ${method}`);
     res.json({ message: "Deposit submitted (Pending)", transaction: tx.rows[0] });
   } catch (err) {
     console.error("Deposit error:", err);
@@ -547,31 +550,15 @@ app.post('/api/orders/confirm/:id', async (req, res) => {
 
 /* ---------------- Admin: Approve deposit (credit balance) ---------------- */
 // Admin approves a deposit: marks transaction Completed and credits wallet
+// DISABLED: This endpoint is replaced by the admin panel transaction update endpoint
+// to prevent double processing of deposits
 app.post("/api/deposit/approve/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    await withClient(async (client) => {
-      const txr = await client.query("SELECT * FROM transactions WHERE id=$1 FOR UPDATE", [id]);
-      if (!txr.rows.length) throw { status: 404, message: "Transaction not found" };
-      const tx = txr.rows[0];
-      if (tx.type !== "deposit") throw { status: 400, message: "Not a deposit transaction" };
-      if (tx.status !== "Pending") throw { status: 400, message: "Only Pending deposit can be approved" };
-
-      const wr = await client.query("SELECT * FROM wallets WHERE user_email=$1 FOR UPDATE", [tx.user_email]);
-      if (!wr.rows.length) throw { status: 404, message: "Wallet not found" };
-
-      // credit wallet
-      await client.query("UPDATE wallets SET balance = balance + $1 WHERE user_email = $2", [Number(tx.amount), tx.user_email]);
-
-      await client.query("UPDATE transactions SET status='Completed' WHERE id=$1", [id]);
-    });
-
-    res.json({ message: "Deposit approved and wallet credited" });
-  } catch (err) {
-    console.error("Deposit approve error:", err);
-    const status = err.status || 500;
-    res.status(status).json({ error: err.message || "Approve failed" });
-  }
+  console.log("⚠️ WARNING: Old deposit approval endpoint called - this should not happen!");
+  console.log("Use PUT /api/admin/transactions/:id instead");
+  res.status(410).json({ 
+    error: "This endpoint is deprecated. Use PUT /api/admin/transactions/:id instead",
+    message: "Please use the admin panel to approve deposits"
+  });
 });
 
 /*******************************
@@ -727,11 +714,26 @@ router.post("/api/gift/spin", async (req, res) => {
     
     // Add prize amount to balance if it's a cash prize
     if (prizeAmount > 0) {
-    await pool.query(
+      console.log(`🎁 GIFT SPIN DEBUG:`);
+      console.log(`- User: ${userEmail}`);
+      console.log(`- Prize: ${prize}`);
+      console.log(`- Prize Amount: ${prizeAmount} Ks`);
+      
+      // Get current balance before adding prize
+      const currentWallet = await pool.query("SELECT balance FROM wallets WHERE user_email = $1", [userEmail]);
+      const currentBalance = currentWallet.rows[0]?.balance || 0;
+      console.log(`- Current Balance: ${currentBalance} Ks`);
+      
+      await pool.query(
         `UPDATE wallets SET balance = balance + $1 WHERE user_email = $2`,
         [prizeAmount, userEmail]
       );
-      console.log(`Added ${prizeAmount}Ks to balance for prize: ${prize}`);
+      
+      // Get new balance after adding prize
+      const newWallet = await pool.query("SELECT balance FROM wallets WHERE user_email = $1", [userEmail]);
+      const newBalance = newWallet.rows[0]?.balance || 0;
+      console.log(`- New Balance: ${newBalance} Ks`);
+      console.log(`- Balance Increase: ${newBalance - currentBalance} Ks`);
     }
     
     // Insert transaction with prize name as remark
@@ -1288,13 +1290,34 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
     
     // If updating status to 'Completed' and it's a deposit, handle wallet balance update
     if (status === 'Completed' && transaction.type === 'deposit' && transaction.status === 'Pending') {
+      console.log(`🔍 DEPOSIT APPROVAL DEBUG:`);
+      console.log(`- Transaction ID: ${id}`);
+      console.log(`- Transaction Amount: ${transaction.amount}`);
+      console.log(`- User Email: ${transaction.user_email}`);
+      console.log(`- Current Status: ${transaction.status}`);
+      
       await withClient(async (client) => {
+        // Get current wallet balance before update
+        const currentWallet = await client.query("SELECT balance FROM wallets WHERE user_email = $1", [transaction.user_email]);
+        const currentBalance = currentWallet.rows[0]?.balance || 0;
+        console.log(`- Current Wallet Balance: ${currentBalance}`);
+        
         // Update transaction status
         await client.query("UPDATE transactions SET status = $1 WHERE id = $2", [status, id]);
+        console.log(`- Transaction status updated to: ${status}`);
         
         // Update wallet balance for deposit
+        const depositAmount = Number(transaction.amount);
+        console.log(`- Adding to wallet: ${depositAmount}`);
+        
         await client.query("UPDATE wallets SET balance = balance + $1 WHERE user_email = $2", 
-          [Number(transaction.amount), transaction.user_email]);
+          [depositAmount, transaction.user_email]);
+        
+        // Get new wallet balance after update
+        const newWallet = await client.query("SELECT balance FROM wallets WHERE user_email = $1", [transaction.user_email]);
+        const newBalance = newWallet.rows[0]?.balance || 0;
+        console.log(`- New Wallet Balance: ${newBalance}`);
+        console.log(`- Balance Increase: ${newBalance - currentBalance}`);
       });
     } else {
       // For non-deposit transactions or other status updates, just update the transaction

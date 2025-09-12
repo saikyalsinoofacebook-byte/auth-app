@@ -1268,7 +1268,6 @@ function viewTransaction(transactionId) {
     }
     
     const typeInfo = getTransactionTypeInfo(transaction.type);
-    
     const modalBody = `
         <div class="row">
             <div class="col-md-6">
@@ -2528,7 +2527,7 @@ function initNotificationSystem() {
     console.log('Initializing notification system...');
     
     // Add initial system notification
-    addNotification('info', 'System ready. Monitoring user activities...', 'Just now');
+    addNotification('info', 'Admin panel ready. Waiting for user activities...', 'Just now');
     
     // Start monitoring for user activities
     startActivityMonitoring();
@@ -2638,42 +2637,54 @@ function clearNotifications() {
 
 // Start monitoring user activities
 function startActivityMonitoring() {
-    // Monitor for user actions and add notifications
-    console.log('Starting activity monitoring...');
-    
-    // Example: Monitor form submissions
-    document.addEventListener('submit', function(e) {
-        if (e.target.tagName === 'FORM') {
-            addNotification('info', 'Form submitted', 'Just now');
-        }
-    });
-    
-    // Example: Monitor button clicks
-    document.addEventListener('click', function(e) {
-        if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Save')) {
-            addNotification('success', 'Changes saved successfully', 'Just now');
-        }
-    });
+    // Legacy function - real monitoring is now handled by monitorRealUserActivity()
+    console.log('Activity monitoring handled by monitorRealUserActivity()');
 }
 
-// Simulate user activities (for demo purposes)
-function simulateUserActivity() {
-    const activities = [
-        { type: 'success', message: 'New user registered: john@example.com' },
-        { type: 'info', message: 'Deposit request received: 1000 Ks' },
-        { type: 'warning', message: 'Withdrawal pending approval: 500 Ks' },
-        { type: 'success', message: 'Order completed: MLBB Diamonds' },
-        { type: 'error', message: 'Failed transaction: Invalid payment method' },
-        { type: 'info', message: 'Gift spin completed: 100 Ks won' },
-        { type: 'success', message: 'Wallet updated: +1000 Ks' },
-        { type: 'info', message: 'Admin login: admin@admin.xyz1#' }
-    ];
+// Real user activity monitoring (no fake notifications)
+function monitorRealUserActivity() {
+    console.log('🔔 Real user activity monitoring started');
     
-    // Add random activity every 10-30 seconds
-    setInterval(() => {
-        const activity = activities[Math.floor(Math.random() * activities.length)];
-        addNotification(activity.type, activity.message);
-    }, Math.random() * 20000 + 10000); // 10-30 seconds
+    // Monitor form submissions for real user actions
+    document.addEventListener('submit', function(e) {
+        if (e.target.tagName === 'FORM') {
+            const formType = e.target.id || e.target.className || 'form';
+            addNotification('info', `Form submitted: ${formType}`, 'Just now');
+        }
+    });
+    
+    // Monitor API calls for real user actions
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+        const [url, options] = args;
+        
+        // Only monitor specific user-related API calls
+        if (url.includes('/api/register') || url.includes('/api/login') || 
+            url.includes('/api/deposit') || url.includes('/api/withdraw') ||
+            url.includes('/api/gift/spin') || url.includes('/api/orders')) {
+            
+            return originalFetch.apply(this, args).then(response => {
+                if (response.ok) {
+                    const action = getActionFromUrl(url);
+                    addNotification('success', `User action: ${action}`, 'Just now');
+                }
+                return response;
+            });
+        }
+        
+        return originalFetch.apply(this, args);
+    };
+}
+
+// Helper function to get action description from URL
+function getActionFromUrl(url) {
+    if (url.includes('/api/register')) return 'New user registration';
+    if (url.includes('/api/login')) return 'User login';
+    if (url.includes('/api/deposit')) return 'Deposit request';
+    if (url.includes('/api/withdraw')) return 'Withdrawal request';
+    if (url.includes('/api/gift/spin')) return 'Gift wheel spin';
+    if (url.includes('/api/orders')) return 'Order placed';
+    return 'User action';
 }
 
 // Initialize admin panel when DOM is loaded
@@ -2683,8 +2694,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize notification system
     initNotificationSystem();
     
-    // Start simulating user activities (remove in production)
-    simulateUserActivity();
+    // Start monitoring real user activities (no fake notifications)
+    monitorRealUserActivity();
     
     // Start inactivity timer
     if (typeof startInactivityTimer === 'function') {
