@@ -1278,10 +1278,32 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
   const { status, amount, type, method, remark } = req.body;
   
   try {
-    if (status) {
-      await pool.query("UPDATE transactions SET status = $1 WHERE id = $2", [status, id]);
+    // First, get the transaction details to check if it's a deposit
+    const txResult = await pool.query("SELECT * FROM transactions WHERE id = $1", [id]);
+    if (!txResult.rows.length) {
+      return res.status(404).json({ error: "Transaction not found" });
     }
     
+    const transaction = txResult.rows[0];
+    
+    // If updating status to 'Completed' and it's a deposit, handle wallet balance update
+    if (status === 'Completed' && transaction.type === 'deposit' && transaction.status === 'Pending') {
+      await withClient(async (client) => {
+        // Update transaction status
+        await client.query("UPDATE transactions SET status = $1 WHERE id = $2", [status, id]);
+        
+        // Update wallet balance for deposit
+        await client.query("UPDATE wallets SET balance = balance + $1 WHERE user_email = $2", 
+          [Number(transaction.amount), transaction.user_email]);
+      });
+    } else {
+      // For non-deposit transactions or other status updates, just update the transaction
+      if (status) {
+        await pool.query("UPDATE transactions SET status = $1 WHERE id = $2", [status, id]);
+      }
+    }
+    
+    // Handle other field updates
     if (amount !== undefined) {
       await pool.query("UPDATE transactions SET amount = $1 WHERE id = $2", [amount, id]);
     }
