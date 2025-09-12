@@ -91,12 +91,17 @@ html, body {
   display: inline-block;
   padding: 8px 20px;
   color: #ffcc00;
-  animation: scrollText 12s linear infinite;
+  animation: scrollText 25s linear infinite;
   font-size: 13px;
+  cursor: pointer;
+}
+
+.marquee:hover p {
+  animation-play-state: paused;
 }
 @keyframes scrollText {
-  30% { transform: translateX(90%); }
-  90% { transform: translateX(-90%); }
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
 }
 
 /* Services */

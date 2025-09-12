@@ -1346,19 +1346,29 @@ async function updateTransactionStatus(transactionId, status) {
     try {
         const response = await fetch(`${API_BASE}/api/admin/transactions/${transactionId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                'Content-Type': 'application/json' 
+            },
             body: JSON.stringify({ status })
         });
         
         if (response.ok) {
-            alert(`Transaction ${status.toLowerCase()} successfully`);
-            loadTransactions();
-            closeModal();
+            const data = await response.json();
+            if (data.success) {
+                showNotification(`Transaction ${status} successfully`, 'success');
+                loadTransactions();
+                closeModal();
+            } else {
+                showNotification(data.error || 'Failed to update transaction', 'error');
+            }
         } else {
-            alert('Update failed');
+            const errorData = await response.json();
+            showNotification(errorData.error || 'Failed to update transaction', 'error');
         }
     } catch (error) {
-        alert('Update error: ' + error.message);
+        console.error('Update transaction error:', error);
+        showNotification('Error updating transaction: ' + error.message, 'error');
     }
 }
 
