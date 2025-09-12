@@ -177,16 +177,11 @@ function switchPage(page) {
     }
 }
 
-// Load dashboard data
-async function loadDashboard() {
-    console.log('Loading dashboard...');
+// Load dashboard data with retry mechanism
+async function loadDashboard(retryCount = 0) {
+    console.log(`Loading dashboard... (attempt ${retryCount + 1})`);
     
     try {
-        // Try to load real data first with timeout
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Request timeout')), 3000)
-        );
-        
         const adminToken = localStorage.getItem('adminToken');
         console.log('Dashboard - Admin token:', adminToken ? 'Found' : 'Not found');
         
@@ -195,36 +190,51 @@ async function loadDashboard() {
             'Content-Type': 'application/json'
         };
         
-        const dataPromise = Promise.all([
-            fetch(`${API_BASE}/api/admin/users`, { headers }),
-            fetch(`${API_BASE}/api/admin/orders`, { headers }),
-            fetch(`${API_BASE}/api/admin/transactions`, { headers })
-        ]);
+        // Try individual API calls with shorter timeouts
+        const apiCalls = [
+            { name: 'users', url: `${API_BASE}/api/admin/users` },
+            { name: 'orders', url: `${API_BASE}/api/admin/orders` },
+            { name: 'transactions', url: `${API_BASE}/api/admin/transactions` }
+        ];
         
-        const [usersRes, ordersRes, transactionsRes] = await Promise.race([
-            dataPromise,
-            timeoutPromise
-        ]);
+        const results = {};
+        const errors = [];
         
-        // Check if responses are ok
-        if (!usersRes.ok) {
-            console.error('Users API error:', usersRes.status, usersRes.statusText);
-            throw new Error(`Users API error: ${usersRes.status}`);
+        // Load each API call individually with timeout
+        for (const api of apiCalls) {
+            try {
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error(`${api.name} timeout`)), 8000)
+                );
+                
+                const response = await Promise.race([
+                    fetch(api.url, { headers }),
+                    timeoutPromise
+                ]);
+                
+                if (response.ok) {
+                    results[api.name] = await response.json();
+                    console.log(`${api.name} loaded successfully`);
+                } else {
+                    console.warn(`${api.name} API error:`, response.status, response.statusText);
+                    errors.push(`${api.name}: ${response.status}`);
+                }
+            } catch (error) {
+                console.warn(`${api.name} failed:`, error.message);
+                errors.push(`${api.name}: ${error.message}`);
+            }
         }
-        if (!ordersRes.ok) {
-            console.error('Orders API error:', ordersRes.status, ordersRes.statusText);
-            throw new Error(`Orders API error: ${ordersRes.status}`);
-        }
-        if (!transactionsRes.ok) {
-            console.error('Transactions API error:', transactionsRes.status, transactionsRes.statusText);
-            throw new Error(`Transactions API error: ${transactionsRes.status}`);
+        
+        // If we got some data, use it; otherwise throw error
+        if (Object.keys(results).length === 0) {
+            throw new Error('All API calls failed: ' + errors.join(', '));
         }
         
-        const users = await usersRes.json();
-        const orders = await ordersRes.json();
-        const transactions = await transactionsRes.json();
+        // Update stats with available data
+        const users = results.users || [];
+        const orders = results.orders || [];
+        const transactions = results.transactions || [];
         
-        // Update stats
         document.getElementById('total-users').textContent = users.length;
         document.getElementById('total-orders').textContent = orders.length;
         
@@ -242,8 +252,21 @@ async function loadDashboard() {
         
         console.log('Dashboard loaded successfully with real data');
         
+        // Show warning if some APIs failed
+        if (errors.length > 0) {
+            showNotification(`Dashboard loaded with partial data. Some services are slow.`, 'warning');
+        }
+        
     } catch (error) {
         console.error('Dashboard load error:', error);
+        
+        // Retry once if it's a timeout error
+        if (retryCount === 0 && (error.message.includes('timeout') || error.message.includes('Request timeout'))) {
+            console.log('Retrying dashboard load...');
+            setTimeout(() => loadDashboard(1), 2000);
+            return;
+        }
+        
         console.log('Using fallback data for dashboard');
         
         // Use fallback data
@@ -283,8 +306,46 @@ async function loadDashboard() {
         // Load recent activity with fallback data
         loadRecentActivity(fallbackTransactions.slice(0, 10));
         
-        // Show notification
-        showNotification('Dashboard loaded in fallback mode - Server is updating', 'warning');
+        // Show notification with retry button
+        showNotification('Dashboard loaded in fallback mode - Server is slow', 'warning');
+        addRetryButton();
+    }
+}
+
+// Add retry button to dashboard
+function addRetryButton() {
+    // Remove existing retry button if any
+    const existingBtn = document.getElementById('retry-dashboard-btn');
+    if (existingBtn) {
+        existingBtn.remove();
+    }
+    
+    // Create retry button
+    const retryBtn = document.createElement('button');
+    retryBtn.id = 'retry-dashboard-btn';
+    retryBtn.className = 'btn btn-warning btn-sm';
+    retryBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Retry Dashboard';
+    retryBtn.style.marginLeft = '10px';
+    retryBtn.onclick = () => {
+        retryBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Retrying...';
+        retryBtn.disabled = true;
+        loadDashboard();
+        setTimeout(() => {
+            retryBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Retry Dashboard';
+            retryBtn.disabled = false;
+        }, 5000);
+    };
+    
+    // Add to dashboard header
+    const dashboardHeader = document.querySelector('.dashboard-header');
+    if (dashboardHeader) {
+        dashboardHeader.appendChild(retryBtn);
+    } else {
+        // Fallback: add to admin container
+        const adminContainer = document.querySelector('.admin-container');
+        if (adminContainer) {
+            adminContainer.insertBefore(retryBtn, adminContainer.firstChild);
+        }
     }
 }
 
@@ -378,7 +439,7 @@ async function loadUsers() {
         
         // Try to load real data with timeout
         const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Request timeout')), 3000)
+            setTimeout(() => reject(new Error('Request timeout')), 10000) // Increased to 10 seconds
         );
         
         const dataPromise = fetch(`${API_BASE}/api/admin/users`, {
@@ -2361,12 +2422,43 @@ function saveWallet(userEmail) {
     const form = document.getElementById('wallet-form');
     const formData = new FormData(form);
     
+    // Get the save button and add loading state
+    const saveButton = document.querySelector('button[onclick*="saveWallet"]');
+    const originalText = saveButton.innerHTML;
+    const originalDisabled = saveButton.disabled;
+    
+    // Add loading animation
+    saveButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+    saveButton.disabled = true;
+    saveButton.classList.add('btn-loading');
+    
     const walletData = {
-        balance: parseFloat(formData.get('balance')),
-        available: parseFloat(formData.get('available')),
-        onhold: parseFloat(formData.get('onhold')),
-        tokens: parseInt(formData.get('tokens'))
+        balance: parseFloat(formData.get('balance')) || 0,
+        available: parseFloat(formData.get('available')) || 0,
+        onhold: parseFloat(formData.get('onhold')) || 0,
+        tokens: parseInt(formData.get('tokens')) || 0
     };
+    
+    // Validate data
+    if (walletData.balance < 0 || walletData.available < 0 || walletData.onhold < 0 || walletData.tokens < 0) {
+        showNotification('Values cannot be negative', 'error');
+        saveButton.innerHTML = originalText;
+        saveButton.disabled = originalDisabled;
+        saveButton.classList.remove('btn-loading');
+        saveButton.classList.add('btn-error');
+        setTimeout(() => saveButton.classList.remove('btn-error'), 500);
+        return;
+    }
+    
+    if (walletData.available + walletData.onhold > walletData.balance) {
+        showNotification('Available + On Hold cannot exceed Total Balance', 'error');
+        saveButton.innerHTML = originalText;
+        saveButton.disabled = originalDisabled;
+        saveButton.classList.remove('btn-loading');
+        saveButton.classList.add('btn-error');
+        setTimeout(() => saveButton.classList.remove('btn-error'), 500);
+        return;
+    }
     
     fetch(`${API_BASE}/api/admin/wallets/${userEmail}`, {
         method: 'PUT',
@@ -2376,19 +2468,47 @@ function saveWallet(userEmail) {
         },
         body: JSON.stringify(walletData)
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             showNotification('Wallet updated successfully', 'success');
-            loadWallets(); // Reload wallets
-            bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
+            saveButton.classList.remove('btn-loading');
+            saveButton.classList.add('btn-success');
+            setTimeout(() => {
+                loadWallets(); // Reload wallets
+                bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
+            }, 500);
         } else {
-            showNotification('Failed to update wallet', 'error');
+            showNotification(data.error || 'Failed to update wallet', 'error');
+            saveButton.classList.remove('btn-loading');
+            saveButton.classList.add('btn-error');
+            setTimeout(() => saveButton.classList.remove('btn-error'), 500);
         }
     })
     .catch(error => {
         console.error('Update wallet error:', error);
-        showNotification('Error updating wallet', 'error');
+        saveButton.classList.remove('btn-loading');
+        saveButton.classList.add('btn-error');
+        setTimeout(() => saveButton.classList.remove('btn-error'), 500);
+        
+        if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
+            showNotification('Server is temporarily unavailable. Please try again later.', 'error');
+        } else if (error.message.includes('fetch')) {
+            showNotification('Network error. Please check your connection.', 'error');
+        } else {
+            showNotification('Error updating wallet: ' + error.message, 'error');
+        }
+    })
+    .finally(() => {
+        // Restore button state
+        saveButton.innerHTML = originalText;
+        saveButton.disabled = originalDisabled;
+        saveButton.classList.remove('btn-loading', 'btn-success', 'btn-error');
     });
 }
 

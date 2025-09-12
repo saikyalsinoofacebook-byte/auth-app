@@ -1346,11 +1346,15 @@ router.get("/api/admin/wallets", authenticateAdmin, async (req, res) => {
 // Update wallet
 router.put("/api/admin/wallets/:userEmail", authenticateAdmin, async (req, res) => {
   const { userEmail } = req.params;
-  const { balance, onhold, tokens } = req.body;
+  const { balance, available, onhold, tokens } = req.body;
   
   try {
     if (balance !== undefined) {
       await pool.query("UPDATE wallets SET balance = $1 WHERE user_email = $2", [balance, userEmail]);
+    }
+    
+    if (available !== undefined) {
+      await pool.query("UPDATE wallets SET available = $1 WHERE user_email = $2", [available, userEmail]);
     }
     
     if (onhold !== undefined) {
@@ -1361,7 +1365,7 @@ router.put("/api/admin/wallets/:userEmail", authenticateAdmin, async (req, res) 
       await pool.query("UPDATE wallets SET tokens = $1 WHERE user_email = $2", [tokens, userEmail]);
     }
     
-    res.json({ message: "Wallet updated successfully" });
+    res.json({ success: true, message: "Wallet updated successfully" });
   } catch (err) {
     console.error("Update wallet error:", err);
     res.status(500).json({ error: "Failed to update wallet" });
