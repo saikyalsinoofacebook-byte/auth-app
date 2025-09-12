@@ -1240,13 +1240,15 @@ async function updateOrderStatus(orderId, status) {
         
         if (response.ok) {
             const data = await response.json();
-            if (data.success) {
-                showNotification(`Order ${status} successfully`, 'success');
-                loadOrders();
-                closeModal();
-            } else {
-                showNotification(data.error || 'Failed to update order', 'error');
-            }
+        if (data.success) {
+            showNotification(`Order ${status} successfully`, 'success');
+            addNotification('success', `Order ${status}: #${orderId}`, 'Just now');
+            loadOrders();
+            closeModal();
+        } else {
+            showNotification(data.error || 'Failed to update order', 'error');
+            addNotification('error', `Order update failed: ${data.error || 'Unknown error'}`, 'Just now');
+        }
         } else {
             const errorData = await response.json();
             showNotification(errorData.error || 'Failed to update order', 'error');
@@ -1426,13 +1428,15 @@ async function updateTransactionStatus(transactionId, status) {
         
         if (response.ok) {
             const data = await response.json();
-            if (data.success) {
-                showNotification(`Transaction ${status} successfully`, 'success');
-                loadTransactions();
-                closeModal();
-            } else {
-                showNotification(data.error || 'Failed to update transaction', 'error');
-            }
+        if (data.success) {
+            showNotification(`Transaction ${status} successfully`, 'success');
+            addNotification('success', `Transaction ${status}: #${transactionId}`, 'Just now');
+            loadTransactions();
+            closeModal();
+        } else {
+            showNotification(data.error || 'Failed to update transaction', 'error');
+            addNotification('error', `Transaction update failed: ${data.error || 'Unknown error'}`, 'Just now');
+        }
         } else {
             const errorData = await response.json();
             showNotification(errorData.error || 'Failed to update transaction', 'error');
@@ -2477,6 +2481,7 @@ function saveWallet(userEmail) {
     .then(data => {
         if (data.success) {
             showNotification('Wallet updated successfully', 'success');
+            addNotification('success', `Wallet updated: ${userEmail}`, 'Just now');
             saveButton.classList.remove('btn-loading');
             saveButton.classList.add('btn-success');
             setTimeout(() => {
@@ -2485,6 +2490,7 @@ function saveWallet(userEmail) {
             }, 500);
         } else {
             showNotification(data.error || 'Failed to update wallet', 'error');
+            addNotification('error', `Wallet update failed: ${data.error || 'Unknown error'}`, 'Just now');
             saveButton.classList.remove('btn-loading');
             saveButton.classList.add('btn-error');
             setTimeout(() => saveButton.classList.remove('btn-error'), 500);
@@ -2512,9 +2518,173 @@ function saveWallet(userEmail) {
     });
 }
 
+// Notification System
+let notifications = [];
+let notificationCount = 0;
+let isNotificationExpanded = false;
+
+// Initialize notification system
+function initNotificationSystem() {
+    console.log('Initializing notification system...');
+    
+    // Add initial system notification
+    addNotification('info', 'System ready. Monitoring user activities...', 'Just now');
+    
+    // Start monitoring for user activities
+    startActivityMonitoring();
+}
+
+// Add notification
+function addNotification(type, message, time = null) {
+    const notification = {
+        id: Date.now(),
+        type: type,
+        message: message,
+        time: time || new Date().toLocaleTimeString()
+    };
+    
+    notifications.unshift(notification); // Add to beginning
+    notificationCount++;
+    
+    // Keep only last 10 notifications
+    if (notifications.length > 10) {
+        notifications = notifications.slice(0, 10);
+    }
+    
+    updateNotificationDisplay();
+    updateNotificationBadge();
+    
+    // Auto-remove after 30 seconds for non-critical notifications
+    if (type !== 'error' && type !== 'warning') {
+        setTimeout(() => {
+            removeNotification(notification.id);
+        }, 30000);
+    }
+}
+
+// Remove notification
+function removeNotification(id) {
+    notifications = notifications.filter(n => n.id !== id);
+    updateNotificationDisplay();
+    updateNotificationBadge();
+}
+
+// Update notification display
+function updateNotificationDisplay() {
+    const notificationList = document.getElementById('notificationList');
+    if (!notificationList) return;
+    
+    if (notifications.length === 0) {
+        notificationList.innerHTML = '<div class="notification-item"><i class="bi bi-info-circle text-primary"></i><span>No notifications</span></div>';
+        return;
+    }
+    
+    notificationList.innerHTML = notifications.map(notification => `
+        <div class="notification-item ${notification.type}">
+            <i class="bi ${getNotificationIcon(notification.type)}"></i>
+            <span>${notification.message}</span>
+            <small class="text-muted">${notification.time}</small>
+        </div>
+    `).join('');
+}
+
+// Get notification icon based on type
+function getNotificationIcon(type) {
+    const icons = {
+        'success': 'bi-check-circle-fill',
+        'error': 'bi-exclamation-triangle-fill',
+        'warning': 'bi-exclamation-circle-fill',
+        'info': 'bi-info-circle-fill',
+        'primary': 'bi-bell-fill'
+    };
+    return icons[type] || 'bi-info-circle-fill';
+}
+
+// Update notification badge
+function updateNotificationBadge() {
+    const badge = document.getElementById('notificationBadge');
+    if (badge) {
+        badge.textContent = notificationCount;
+        badge.style.display = notificationCount > 0 ? 'flex' : 'none';
+    }
+}
+
+// Toggle notifications
+function toggleNotifications() {
+    const notificationList = document.getElementById('notificationList');
+    const toggleIcon = document.getElementById('notificationToggle');
+    
+    if (!notificationList || !toggleIcon) return;
+    
+    isNotificationExpanded = !isNotificationExpanded;
+    
+    if (isNotificationExpanded) {
+        notificationList.classList.add('expanded');
+        toggleIcon.className = 'bi bi-chevron-up';
+    } else {
+        notificationList.classList.remove('expanded');
+        toggleIcon.className = 'bi bi-chevron-down';
+    }
+}
+
+// Clear all notifications
+function clearNotifications() {
+    notifications = [];
+    notificationCount = 0;
+    updateNotificationDisplay();
+    updateNotificationBadge();
+    addNotification('info', 'Notifications cleared', 'Just now');
+}
+
+// Start monitoring user activities
+function startActivityMonitoring() {
+    // Monitor for user actions and add notifications
+    console.log('Starting activity monitoring...');
+    
+    // Example: Monitor form submissions
+    document.addEventListener('submit', function(e) {
+        if (e.target.tagName === 'FORM') {
+            addNotification('info', 'Form submitted', 'Just now');
+        }
+    });
+    
+    // Example: Monitor button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Save')) {
+            addNotification('success', 'Changes saved successfully', 'Just now');
+        }
+    });
+}
+
+// Simulate user activities (for demo purposes)
+function simulateUserActivity() {
+    const activities = [
+        { type: 'success', message: 'New user registered: john@example.com' },
+        { type: 'info', message: 'Deposit request received: 1000 Ks' },
+        { type: 'warning', message: 'Withdrawal pending approval: 500 Ks' },
+        { type: 'success', message: 'Order completed: MLBB Diamonds' },
+        { type: 'error', message: 'Failed transaction: Invalid payment method' },
+        { type: 'info', message: 'Gift spin completed: 100 Ks won' },
+        { type: 'success', message: 'Wallet updated: +1000 Ks' },
+        { type: 'info', message: 'Admin login: admin@admin.xyz1#' }
+    ];
+    
+    // Add random activity every 10-30 seconds
+    setInterval(() => {
+        const activity = activities[Math.floor(Math.random() * activities.length)];
+        addNotification(activity.type, activity.message);
+    }, Math.random() * 20000 + 10000); // 10-30 seconds
+}
+
 // Initialize admin panel when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Admin panel JavaScript loaded');
+    
+    // Initialize notification system
+    initNotificationSystem();
+    
+    // Start simulating user activities (remove in production)
+    simulateUserActivity();
     
     // Start inactivity timer
     if (typeof startInactivityTimer === 'function') {

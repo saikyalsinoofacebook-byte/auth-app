@@ -27,6 +27,34 @@
         </div>
     </nav>
 
+    <!-- Notification Header -->
+    <div class="notification-header" id="notificationHeader">
+        <div class="notification-container">
+            <div class="notification-icon">
+                <i class="bi bi-bell"></i>
+                <span class="notification-badge" id="notificationBadge">0</span>
+            </div>
+            <div class="notification-content">
+                <h6>Live Notifications</h6>
+                <div class="notification-list" id="notificationList">
+                    <div class="notification-item">
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>System ready. Monitoring user activities...</span>
+                        <small class="text-muted">Just now</small>
+                    </div>
+                </div>
+            </div>
+            <div class="notification-actions">
+                <button class="btn btn-sm btn-outline-primary" onclick="clearNotifications()">
+                    <i class="bi bi-trash"></i> Clear
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="toggleNotifications()">
+                    <i class="bi bi-chevron-down" id="notificationToggle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile Menu Overlay -->
     <div class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
 
