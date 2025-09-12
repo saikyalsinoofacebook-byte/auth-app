@@ -227,10 +227,15 @@ async function loadDashboard() {
         // Update stats
         document.getElementById('total-users').textContent = users.length;
         document.getElementById('total-orders').textContent = orders.length;
-        document.getElementById('total-revenue').textContent = 
-            transactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0).toFixed(2);
+        
+        // Calculate total revenue safely
+        const totalRevenue = transactions
+            .filter(t => t.amount && typeof t.amount === 'number' && t.amount > 0)
+            .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        document.getElementById('total-revenue').textContent = totalRevenue.toFixed(2);
+        
         document.getElementById('pending-orders').textContent = 
-            orders.filter(o => o.status === 'Pending').length;
+            orders.filter(o => o.status === 'pending' || o.status === 'Pending').length;
         
         // Load recent activity
         loadRecentActivity(transactions.slice(0, 10));
@@ -265,10 +270,15 @@ async function loadDashboard() {
         // Update stats with fallback data
         document.getElementById('total-users').textContent = fallbackUsers.length;
         document.getElementById('total-orders').textContent = fallbackOrders.length;
-        document.getElementById('total-revenue').textContent = 
-            fallbackTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0).toFixed(2);
+        
+        // Calculate total revenue safely for fallback data
+        const fallbackRevenue = fallbackTransactions
+            .filter(t => t.amount && typeof t.amount === 'number' && t.amount > 0)
+            .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        document.getElementById('total-revenue').textContent = fallbackRevenue.toFixed(2);
+        
         document.getElementById('pending-orders').textContent = 
-            fallbackOrders.filter(o => o.status === 'pending').length;
+            fallbackOrders.filter(o => o.status === 'pending' || o.status === 'Pending').length;
         
         // Load recent activity with fallback data
         loadRecentActivity(fallbackTransactions.slice(0, 10));

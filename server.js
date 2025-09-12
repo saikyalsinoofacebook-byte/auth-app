@@ -1249,7 +1249,7 @@ router.put("/api/admin/orders/:orderId", authenticateAdmin, async (req, res) => 
       await pool.query("UPDATE orders SET server_id = $1 WHERE order_id = $2", [serverId, orderId]);
     }
     
-    res.json({ message: "Order updated successfully" });
+    res.json({ success: true, message: "Order updated successfully" });
   } catch (err) {
     console.error("Update order error:", err);
     res.status(500).json({ error: "Failed to update order" });
@@ -1298,7 +1298,7 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
       await pool.query("UPDATE transactions SET remark = $1 WHERE id = $2", [remark, id]);
     }
     
-    res.json({ message: "Transaction updated successfully" });
+    res.json({ success: true, message: "Transaction updated successfully" });
   } catch (err) {
     console.error("Update transaction error:", err);
     res.status(500).json({ error: "Failed to update transaction" });
