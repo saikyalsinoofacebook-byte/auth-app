@@ -413,7 +413,7 @@
         async function verifyAdminToken(token) {
             try {
                 console.log('Verifying admin token...');
-                const response = await fetch('/api/admin/verify', {
+                const response = await fetch('https://arthur-game-shop.onrender.com/api/admin/verify', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -428,24 +428,31 @@
                     console.log('Verification response data:', data);
                     console.log('Token is valid:', data.valid);
                     
-                    if (data.valid) {
-                        initializeAdminPanel();
-                    } else {
-                        console.log('Invalid token, redirecting to login');
-                        localStorage.removeItem('adminToken');
-                        window.location.href = 'login.html';
-                    }
+                if (data.valid) {
+                    console.log('Token is valid, initializing admin panel');
+                    initializeAdminPanel();
                 } else {
-                    console.log('Token verification failed, redirecting to login');
+                    console.log('Invalid token, redirecting to login');
                     localStorage.removeItem('adminToken');
                     window.location.href = 'login.html';
                 }
-            } catch (error) {
-                console.log('Token verification error:', error);
-                // If server is down, still allow access with fallback data
-                console.log('Server unavailable, using fallback mode');
-                initializeAdminPanel();
+            } else {
+                console.log('Token verification failed, redirecting to login');
+                localStorage.removeItem('adminToken');
+                window.location.href = 'login.html';
             }
+        } catch (error) {
+            console.log('Token verification error:', error);
+            // Only allow fallback mode if it's a network error, not auth error
+            if (error.message.includes('fetch') || error.message.includes('network')) {
+                console.log('Network error, using fallback mode');
+                initializeAdminPanel();
+            } else {
+                console.log('Authentication error, redirecting to login');
+                localStorage.removeItem('adminToken');
+                window.location.href = 'login.html';
+            }
+        }
         }
         
         // Initialize admin panel

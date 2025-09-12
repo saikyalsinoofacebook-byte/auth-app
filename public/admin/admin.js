@@ -187,10 +187,18 @@ async function loadDashboard() {
             setTimeout(() => reject(new Error('Request timeout')), 3000)
         );
         
+        const adminToken = localStorage.getItem('adminToken');
+        console.log('Dashboard - Admin token:', adminToken ? 'Found' : 'Not found');
+        
+        const headers = {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+        };
+        
         const dataPromise = Promise.all([
-            fetch(`${API_BASE}/api/admin/users`),
-            fetch(`${API_BASE}/api/admin/orders`),
-            fetch(`${API_BASE}/api/admin/transactions`)
+            fetch(`${API_BASE}/api/admin/users`, { headers }),
+            fetch(`${API_BASE}/api/admin/orders`, { headers }),
+            fetch(`${API_BASE}/api/admin/transactions`, { headers })
         ]);
         
         const [usersRes, ordersRes, transactionsRes] = await Promise.race([
@@ -199,8 +207,17 @@ async function loadDashboard() {
         ]);
         
         // Check if responses are ok
-        if (!usersRes.ok || !ordersRes.ok || !transactionsRes.ok) {
-            throw new Error('API responses not ok');
+        if (!usersRes.ok) {
+            console.error('Users API error:', usersRes.status, usersRes.statusText);
+            throw new Error(`Users API error: ${usersRes.status}`);
+        }
+        if (!ordersRes.ok) {
+            console.error('Orders API error:', ordersRes.status, ordersRes.statusText);
+            throw new Error(`Orders API error: ${ordersRes.status}`);
+        }
+        if (!transactionsRes.ok) {
+            console.error('Transactions API error:', transactionsRes.status, transactionsRes.statusText);
+            throw new Error(`Transactions API error: ${transactionsRes.status}`);
         }
         
         const users = await usersRes.json();
