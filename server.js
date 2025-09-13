@@ -585,6 +585,215 @@ app.post("/api/deposit/approve/:id", async (req, res) => {
 });
 
 /*******************************
+ * 📱 Telegram Authentication
+ *******************************/
+
+// Telegram authentication callback
+app.get("/api/telegram-auth-callback", async (req, res) => {
+  console.log("=== TELEGRAM AUTH CALLBACK ===");
+  console.log("Query params:", req.query);
+  
+  const { id, first_name, last_name, username, photo_url, auth_date, hash } = req.query;
+  
+  // Verify the authentication data (basic validation)
+  if (!id || !first_name || !auth_date || !hash) {
+    console.log("❌ Missing required Telegram auth data");
+    return res.status(400).send(`
+      <html>
+        <head><title>Authentication Failed</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
+            <h2 style="color: #e74c3c;">Authentication Failed</h2>
+            <p>Invalid authentication data received from Telegram.</p>
+            <a href="/login.html" style="color: #3498db; text-decoration: none;">← Back to Login</a>
+          </div>
+        </body>
+      </html>
+    `);
+  }
+  
+  try {
+    // Create user data from Telegram info
+    const telegramUser = {
+      telegram_id: id,
+      first_name: first_name,
+      last_name: last_name || '',
+      username: username || '',
+      photo_url: photo_url || '',
+      auth_date: auth_date
+    };
+    
+    console.log("📱 Telegram user data:", telegramUser);
+    
+    // Check if user already exists by telegram_id
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE telegram_id = $1", 
+      [telegramUser.telegram_id]
+    );
+    
+    let user;
+    
+    if (existingUser.rows.length > 0) {
+      // User exists, update their info
+      user = existingUser.rows[0];
+      console.log("✅ Existing user found:", user.email);
+      
+      // Update user info with latest Telegram data
+      await pool.query(
+        "UPDATE users SET first_name = $1, last_name = $2, username = $3, photo_url = $4, updated_at = NOW() WHERE telegram_id = $5",
+        [telegramUser.first_name, telegramUser.last_name, telegramUser.username, telegramUser.photo_url, telegramUser.telegram_id]
+      );
+    } else {
+      // Create new user
+      const fullName = `${telegramUser.first_name} ${telegramUser.last_name}`.trim();
+      const email = `telegram_${telegramUser.telegram_id}@arthur-gameshop.com`;
+      
+      console.log("🆕 Creating new user with email:", email);
+      
+      const newUser = await pool.query(
+        "INSERT INTO users (name, email, telegram_id, first_name, last_name, username, photo_url, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *",
+        [fullName, email, telegramUser.telegram_id, telegramUser.first_name, telegramUser.last_name, telegramUser.username, telegramUser.photo_url]
+      );
+      
+      user = newUser.rows[0];
+      
+      // Create wallet for new user
+      await pool.query(
+        "INSERT INTO wallets (user_id, user_name, user_email, balance, tokens, created_at) VALUES ($1, $2, $3, 0, 0, NOW())",
+        [user.id, user.name, user.email]
+      );
+      
+      console.log("✅ New user created and wallet initialized");
+    }
+    
+    // Generate JWT token for the user
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        name: user.name,
+        telegramId: user.telegram_id 
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    console.log("🔑 JWT token generated for user:", user.email);
+    
+    // Return success page with auto-redirect
+    res.send(`
+      <html>
+        <head>
+          <title>Login Successful</title>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              margin: 0; 
+              padding: 0; 
+              min-height: 100vh; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+            }
+            .success-container { 
+              background: white; 
+              padding: 40px; 
+              border-radius: 15px; 
+              box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+              text-align: center; 
+              max-width: 400px; 
+              width: 90%;
+            }
+            .success-icon { 
+              font-size: 60px; 
+              color: #4CAF50; 
+              margin-bottom: 20px; 
+            }
+            h2 { 
+              color: #333; 
+              margin-bottom: 15px; 
+            }
+            p { 
+              color: #666; 
+              margin-bottom: 25px; 
+              line-height: 1.5; 
+            }
+            .user-info { 
+              background: #f8f9fa; 
+              padding: 15px; 
+              border-radius: 8px; 
+              margin: 20px 0; 
+              border-left: 4px solid #4CAF50;
+            }
+            .loading { 
+              color: #666; 
+              font-size: 14px; 
+            }
+            .spinner { 
+              border: 3px solid #f3f3f3; 
+              border-top: 3px solid #4CAF50; 
+              border-radius: 50%; 
+              width: 30px; 
+              height: 30px; 
+              animation: spin 1s linear infinite; 
+              margin: 0 auto 15px; 
+            }
+            @keyframes spin { 
+              0% { transform: rotate(0deg); } 
+              100% { transform: rotate(360deg); } 
+            }
+          </style>
+        </head>
+        <body>
+          <div class="success-container">
+            <div class="success-icon">✅</div>
+            <h2>Welcome to Arthur Game Shop!</h2>
+            <div class="user-info">
+              <strong>Hello, ${user.name}!</strong><br>
+              <small>Telegram: @${user.username || 'N/A'}</small>
+            </div>
+            <p>You have successfully logged in with Telegram.</p>
+            <div class="spinner"></div>
+            <p class="loading">Redirecting to your dashboard...</p>
+          </div>
+          
+          <script>
+            // Store user data in localStorage
+            localStorage.setItem('user', '${user.name}');
+            localStorage.setItem('email', '${user.email}');
+            localStorage.setItem('token', '${token}');
+            localStorage.setItem('telegramId', '${user.telegram_id}');
+            
+            // Redirect to home page after 2 seconds
+            setTimeout(() => {
+              window.location.href = '/home.html';
+            }, 2000);
+          </script>
+        </body>
+      </html>
+    `);
+    
+  } catch (error) {
+    console.error("❌ Telegram auth error:", error);
+    res.status(500).send(`
+      <html>
+        <head><title>Authentication Error</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
+            <h2 style="color: #e74c3c;">Authentication Error</h2>
+            <p>Sorry, there was an error processing your Telegram login. Please try again.</p>
+            <a href="/login.html" style="color: #3498db; text-decoration: none;">← Back to Login</a>
+          </div>
+        </body>
+      </html>
+    `);
+  }
+});
+
+/*******************************
  * 🎁 Gift Lucky Spin Section
  *******************************/
 
@@ -1193,6 +1402,7 @@ router.get("/api/admin/users/:id", authenticateAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT u.id, u.name, u.email, u.password, u.created_at, 
+             u.telegram_id, u.first_name, u.last_name, u.username, u.photo_url,
              COALESCE(w.balance, 0) as balance, COALESCE(w.tokens, 0) as tokens
       FROM users u
       LEFT JOIN wallets w ON u.id = w.user_id
@@ -1247,6 +1457,7 @@ router.get("/api/admin/users", authenticateAdmin, async (req, res) => {
     // Now try the full query - FIXED FOR RAILWAY DATABASE
     const result = await pool.query(`
       SELECT u.id, u.name, u.email, u.created_at, 
+             u.telegram_id, u.first_name, u.last_name, u.username, u.photo_url,
              COALESCE(w.balance, 0) as balance, COALESCE(w.tokens, 0) as tokens
       FROM users u
       LEFT JOIN wallets w ON u.id = w.user_id
@@ -1684,6 +1895,26 @@ router.put("/api/admin/settings", authenticateAdmin, async (req, res) => {
 // router ကို app ထဲ register
 app.use(router);
 
+// Initialize Telegram columns in users table
+async function initializeTelegramColumns() {
+  try {
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS telegram_id VARCHAR(50) UNIQUE,
+      ADD COLUMN IF NOT EXISTS first_name VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS last_name VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS username VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS photo_url TEXT,
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `);
+    console.log("✅ Telegram columns initialized in users table");
+  } catch (error) {
+    console.log("ℹ️ Telegram columns initialization:", error.message);
+  }
+}
+
+// Initialize Telegram columns on startup
+initializeTelegramColumns();
 
 /* ----------------- START ----------------- */
 app.listen(PORT, () => {

@@ -837,6 +837,46 @@ input[readonly]:focus {
     max-width: 600px;
 }
 
+/* Telegram information styling */
+.telegram-info {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+}
+
+.telegram-info i {
+    font-size: 14px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.telegram-section {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    border-left: 4px solid #0088cc;
+}
+
+.telegram-section h6 {
+    margin-bottom: 15px;
+    color: #0088cc;
+    font-weight: 600;
+}
+
+.telegram-section h6 i {
+    margin-right: 8px;
+}
+
 .screenshot-container {
     margin-top: 10px;
 }

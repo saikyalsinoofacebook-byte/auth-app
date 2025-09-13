@@ -471,9 +471,23 @@ async function loadUsers() {
             const row = document.createElement('tr');
             row.style.animationDelay = `${index * 0.1}s`;
             row.className = 'fade-in-row';
+            
+            // Telegram info display
+            const telegramInfo = user.telegram_id ? 
+                `<div class="telegram-info">
+                    <i class="bi bi-telegram text-primary"></i>
+                    <small class="text-muted">@${user.username || 'N/A'}</small>
+                </div>` : 
+                '<small class="text-muted">Regular User</small>';
+            
             row.innerHTML = `
                 <td>${user.id}</td>
-                <td>${user.name || user.username || 'N/A'}</td>
+                <td>
+                    <div class="user-info">
+                        <div class="user-name">${user.name || user.username || 'N/A'}</div>
+                        ${telegramInfo}
+                    </div>
+                </td>
                 <td>${user.email}</td>
                 <td><span class="badge bg-success">${user.balance || 0} Ks</span></td>
                 <td><span class="badge bg-info">${user.tokens || 0}</span></td>
@@ -2229,6 +2243,47 @@ function createUserModal(user, mode) {
                                 </div>
                             </div>
                         </div>
+                        ${user.telegram_id ? `
+                        <div class="telegram-section">
+                            <h6 class="text-primary mb-3"><i class="bi bi-telegram"></i> Telegram Information</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Telegram ID</label>
+                                        <input type="text" class="form-control" value="${user.telegram_id || ''}" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Username</label>
+                                        <input type="text" class="form-control" value="@${user.username || 'N/A'}" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">First Name</label>
+                                        <input type="text" class="form-control" value="${user.first_name || 'N/A'}" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" value="${user.last_name || 'N/A'}" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                            ${user.photo_url ? `
+                            <div class="mb-3">
+                                <label class="form-label">Profile Photo</label>
+                                <div class="text-center">
+                                    <img src="${user.photo_url}" alt="Profile Photo" class="img-thumbnail" style="max-width: 100px; max-height: 100px; border-radius: 50%;">
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        ` : ''}
                     </form>
                 </div>
                 <div class="modal-footer">
