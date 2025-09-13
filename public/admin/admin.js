@@ -623,6 +623,7 @@ async function loadTransactions() {
     tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="loading"></div> Loading transactions...</td></tr>';
     
     try {
+        console.log('🔄 Loading transactions from database...');
         const response = await fetch(`${API_BASE}/api/admin/transactions`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -630,11 +631,16 @@ async function loadTransactions() {
         });
         
         if (!response.ok) {
+            console.error(`❌ HTTP error! status: ${response.status}`);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const transactions = await response.json();
+        console.log(`✅ Loaded ${transactions.length} transactions from database`);
         adminData.transactions = transactions;
+        
+        // Update connection status
+        updateConnectionStatus(true, `Connected (${transactions.length} transactions)`);
         
         const typeFilter = document.getElementById('transaction-type-filter').value;
         const filteredTransactions = typeFilter ? 
@@ -686,7 +692,7 @@ async function loadTransactions() {
                         </button>
                             <button class="btn btn-sm btn-outline-danger" onclick="rejectTransaction(${transaction.id})" title="Reject Transaction">
                                 <i class="bi bi-x"></i>
-                            </button>
+                        </button>
                     ` : ''}
                         <button class="btn btn-sm btn-outline-warning" onclick="editTransaction(${transaction.id})" title="Edit Transaction">
                             <i class="bi bi-pencil"></i>
@@ -697,8 +703,27 @@ async function loadTransactions() {
             tbody.appendChild(row);
         });
     } catch (error) {
-        console.error('Transactions load error:', error);
-        console.log('Using fallback data for transactions');
+        console.error('❌ Transactions load error:', error);
+        console.log('🔄 Using fallback data for transactions');
+        
+        // Update connection status
+        updateConnectionStatus(false, 'Connection Failed');
+        
+        // Show error message to user
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Database Connection Error</strong><br>
+                        <small>Failed to load transactions from database. Showing fallback data.</small><br>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadTransactions()">
+                            <i class="bi bi-arrow-clockwise"></i> Retry
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
         
         // Use fallback data
         const fallbackTransactions = [
@@ -1098,8 +1123,18 @@ function viewOrder(orderId) {
                 <p><strong>Created:</strong> ${formatDate(order.created_at)}</p>
                 ${order.screenshot ? `
                     <p><strong>Screenshot:</strong></p>
-                    <img src="${order.screenshot}" class="img-fluid" style="max-width: 200px; border-radius: 8px;">
-                ` : ''}
+                    <div class="screenshot-container" style="margin-top: 10px;">
+                        <img src="${order.screenshot.startsWith('http') ? order.screenshot : 'https://arthur-game-shop.onrender.com' + order.screenshot}" 
+                             class="img-fluid" 
+                             style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="screenshot-error" style="display: none; padding: 20px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; text-align: center;">
+                            <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2">Screenshot not available</p>
+                            <small class="text-muted">Path: ${order.screenshot}</small>
+                        </div>
+                    </div>
+                ` : '<p><strong>Screenshot:</strong> No screenshot provided</p>'}
             </div>
         </div>
     `;
@@ -1186,7 +1221,7 @@ function approveOrder(orderId) {
         <div class="text-center">
             <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
             <h5 class="mt-3">Approve Order</h5>
-            <p>Are you sure you want to approve this order?</p>
+        <p>Are you sure you want to approve this order?</p>
             <p><strong>Order ID:</strong> ${order.order_id || order.id}</p>
             <p><strong>User:</strong> ${order.user_email}</p>
             <p><strong>Item:</strong> ${order.item}</p>
@@ -1212,7 +1247,7 @@ function rejectOrder(orderId) {
         <div class="text-center">
             <i class="bi bi-x-circle text-danger" style="font-size: 3rem;"></i>
             <h5 class="mt-3">Reject Order</h5>
-            <p>Are you sure you want to reject this order?</p>
+        <p>Are you sure you want to reject this order?</p>
             <p><strong>Order ID:</strong> ${order.order_id || order.id}</p>
             <p><strong>User:</strong> ${order.user_email}</p>
             <p><strong>Item:</strong> ${order.item}</p>
@@ -1294,8 +1329,18 @@ function viewTransaction(transactionId) {
                 <p><strong>Remark:</strong> ${transaction.remark || 'N/A'}</p>
                 ${transaction.screenshot ? `
                     <p><strong>Screenshot:</strong></p>
-                    <img src="${transaction.screenshot}" class="img-fluid order-screenshot" style="max-width: 200px; border-radius: 8px;">
-                ` : ''}
+                    <div class="screenshot-container" style="margin-top: 10px;">
+                        <img src="${transaction.screenshot.startsWith('http') ? transaction.screenshot : 'https://arthur-game-shop.onrender.com' + transaction.screenshot}" 
+                             class="img-fluid order-screenshot" 
+                             style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="screenshot-error" style="display: none; padding: 20px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; text-align: center;">
+                            <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2">Screenshot not available</p>
+                            <small class="text-muted">Path: ${transaction.screenshot}</small>
+                        </div>
+                    </div>
+                ` : '<p><strong>Screenshot:</strong> No screenshot provided</p>'}
             </div>
         </div>
     `;
@@ -1443,9 +1488,9 @@ async function updateTransactionStatus(transactionId, status) {
             if (data.success) {
                 showNotification(`Transaction ${status} successfully`, 'success');
                 addNotification('success', `Transaction ${status}: #${transactionId}`, 'Just now');
-                loadTransactions();
-                closeModal();
-            } else {
+            loadTransactions();
+            closeModal();
+        } else {
                 showNotification(data.error || 'Failed to update transaction', 'error');
                 addNotification('error', `Transaction update failed: ${data.error || 'Unknown error'}`, 'Just now');
             }
@@ -1469,6 +1514,52 @@ async function updateTransactionStatus(transactionId, status) {
 function refreshUsers() { loadUsers(); }
 function refreshOrders() { loadOrders(); }
 function refreshTransactions() { loadTransactions(); }
+
+// Update connection status indicator
+function updateConnectionStatus(isConnected, message) {
+    const statusElement = document.getElementById('db-status');
+    if (statusElement) {
+        if (isConnected) {
+            statusElement.className = 'badge bg-success';
+            statusElement.innerHTML = `<i class="bi bi-circle-fill"></i> ${message}`;
+        } else {
+            statusElement.className = 'badge bg-danger';
+            statusElement.innerHTML = `<i class="bi bi-circle-fill"></i> ${message}`;
+        }
+    }
+}
+
+// Test database connection
+async function testDatabaseConnection() {
+    try {
+        console.log('🔍 Testing database connection...');
+        updateConnectionStatus(false, 'Testing...');
+        
+        const response = await fetch(`${API_BASE}/api/admin/transactions`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ Database connection successful! Found ${data.length} transactions`);
+            updateConnectionStatus(true, `Connected (${data.length} transactions)`);
+            addNotification('success', `Database connected: ${data.length} transactions loaded`, 'Just now');
+            return true;
+        } else {
+            console.error(`❌ Database connection failed: ${response.status}`);
+            updateConnectionStatus(false, `Failed (${response.status})`);
+            addNotification('error', `Database connection failed: ${response.status}`, 'Just now');
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Database connection test failed:', error);
+        updateConnectionStatus(false, 'Error');
+        addNotification('error', `Database connection test failed: ${error.message}`, 'Just now');
+        return false;
+    }
+}
 function refreshWallets() { loadWallets(); }
 function refreshGifts() { loadGifts(); }
 

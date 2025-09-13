@@ -281,6 +281,11 @@
                 <div class="page-header">
                     <h2><i class="bi bi-credit-card"></i> Transaction Management</h2>
                     <div class="header-actions">
+                        <div class="connection-status" id="connection-status" style="margin-right: 10px;">
+                            <span class="badge bg-secondary" id="db-status">
+                                <i class="bi bi-circle-fill"></i> Checking...
+                            </span>
+                        </div>
                         <select class="form-select" id="transaction-type-filter">
                             <option value="">All Types</option>
                             <option value="deposit">Deposit</option>
@@ -290,6 +295,9 @@
                         </select>
                         <button class="btn btn-primary" onclick="loadTransactions()">
                             <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                        <button class="btn btn-outline-info" onclick="testDatabaseConnection()" title="Test Database Connection">
+                            <i class="bi bi-database-check"></i>
                         </button>
                     </div>
                 </div>
