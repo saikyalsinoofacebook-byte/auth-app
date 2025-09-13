@@ -2219,10 +2219,15 @@ function createTransactionModal(transaction, mode) {
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Amount (Ks)</label>
-                            <input type="number" class="form-control" name="amount" value="${transaction.amount || 0}" 
+                            <input type="number" 
+                                   class="form-control" 
+                                   name="amount" 
+                                   value="${transaction.amount || 0}" 
                                    ${mode === 'view' || transaction.type === 'deposit' ? 'readonly' : ''}
                                    ${transaction.type === 'deposit' ? 'data-original-amount="' + transaction.amount + '"' : ''}
-                                   min="0" max="1000000" step="0.01">
+                                   min="0" 
+                                   max="1000000" 
+                                   step="0.01">
                             ${transaction.type === 'deposit' ? '<small class="form-text text-muted">Deposit amounts cannot be modified for security reasons.</small>' : ''}
                             ${transaction.type === 'deposit' ? '<small class="form-text text-warning">Original amount: ' + transaction.amount + ' Ks</small>' : ''}
                         </div>
