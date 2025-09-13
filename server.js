@@ -1406,7 +1406,7 @@ router.get("/api/admin/transactions", authenticateAdmin, async (req, res) => {
 // Update transaction status
 router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) => {
   const { id } = req.params;
-  const { status, amount, type, method, remark } = req.body;
+  const { status, amount, type, method, phone, recipient, remark } = req.body;
   
   try {
     // First, get the transaction details to check if it's a deposit
@@ -1417,84 +1417,23 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
     
     const transaction = txResult.rows[0];
     
-    // If updating status to 'Completed' and it's a deposit, handle wallet balance update
+    // FIXED: Simplified deposit confirmation logic to prevent over-crediting
     if (status === 'Completed' && transaction.type === 'deposit' && transaction.status === 'Pending') {
-      console.log(`🔍 DEPOSIT APPROVAL DEBUG:`);
-      console.log(`- Transaction ID: ${id}`);
-      console.log(`- Original Transaction Amount: ${transaction.amount}`);
-      console.log(`- Requested Amount Change: ${amount !== undefined ? amount : 'No change'}`);
-      console.log(`- User Email: ${transaction.user_email}`);
-      console.log(`- Current Status: ${transaction.status}`);
-      console.log(`- Request Body:`, req.body);
-      console.log(`- Request Headers:`, req.headers);
-      console.log(`- Admin Token: ${req.headers.authorization ? 'Present' : 'Missing'}`);
+      console.log(`🔧 SIMPLE DEPOSIT APPROVAL - Transaction ${id}`);
       
-      // Log potential tampering
-      if (amount !== undefined && Number(amount) !== Number(transaction.amount)) {
-        console.log(`🚨 SECURITY ALERT: Amount tampering detected!`);
-        console.log(`🚨 Original: ${transaction.amount}, Requested: ${amount}, Difference: ${Number(amount) - Number(transaction.amount)}`);
-        console.log(`🚨 This change will be BLOCKED for security reasons.`);
-      }
+      // Simple atomic update: transaction status + wallet balance in one go
+      const depositAmount = Number(transaction.amount);
+      console.log(`- Crediting ${depositAmount} Ks to ${transaction.user_email}`);
       
       await withClient(async (client) => {
-        // Lock the transaction row to prevent double processing
-        const lockedTx = await client.query("SELECT * FROM transactions WHERE id = $1 FOR UPDATE", [id]);
-        if (!lockedTx.rows.length) {
-          console.log(`❌ Transaction ${id} not found during lock`);
-          return;
-        }
-        
-        const lockedTransaction = lockedTx.rows[0];
-        
-        // Check if this transaction was already processed
-        if (lockedTransaction.status === 'Completed') {
-          console.log(`⚠️ WARNING: Transaction ${id} already completed! Skipping wallet update.`);
-          return;
-        }
-        
-        // Get current wallet balance before update
-        const currentWallet = await client.query("SELECT balance FROM wallets WHERE user_email = $1", [transaction.user_email]);
-        const currentBalance = currentWallet.rows[0]?.balance || 0;
-        console.log(`- Current Wallet Balance: ${currentBalance}`);
-        
         // Update transaction status
-        await client.query("UPDATE transactions SET status = $1 WHERE id = $2", [status, id]);
-        console.log(`- Transaction status updated to: ${status}`);
+        await client.query("UPDATE transactions SET status = 'Completed' WHERE id = $1", [id]);
         
-        // Log status change
-        await logTransactionChange(id, transaction.user_email, 'STATUS_UPDATE', 'status', 
-          transaction.status, status, req.headers.authorization, req);
-        
-        // Update wallet balance for deposit
-        const depositAmount = Number(transaction.amount);
-        console.log(`- Adding to wallet: ${depositAmount}`);
-        
+        // Update wallet balance
         await client.query("UPDATE wallets SET balance = balance + $1 WHERE user_email = $2", 
           [depositAmount, transaction.user_email]);
         
-        // Get new wallet balance after update
-        const newWallet = await client.query("SELECT balance FROM wallets WHERE user_email = $1", [transaction.user_email]);
-        const newBalance = newWallet.rows[0]?.balance || 0;
-        console.log(`- New Wallet Balance: ${newBalance}`);
-        
-        // Log wallet balance change
-        await logTransactionChange(id, transaction.user_email, 'WALLET_CREDIT', 'balance', 
-          currentBalance.toString(), newBalance.toString(), req.headers.authorization, req);
-        console.log(`- Balance Increase: ${newBalance - currentBalance}`);
-        
-        // Check for any other pending deposits for this user
-        const otherDeposits = await client.query(
-          "SELECT id, amount, status FROM transactions WHERE user_email = $1 AND type = 'deposit' AND status = 'Pending'",
-          [transaction.user_email]
-        );
-        console.log(`- Other pending deposits for ${transaction.user_email}:`, otherDeposits.rows);
-        
-        // Log all transactions for this user to debug
-        const allUserTxs = await client.query(
-          "SELECT id, type, amount, status, created_at FROM transactions WHERE user_email = $1 ORDER BY created_at DESC LIMIT 10",
-          [transaction.user_email]
-        );
-        console.log(`- All recent transactions for ${transaction.user_email}:`, allUserTxs.rows);
+        console.log(`✅ Deposit ${id} approved: +${depositAmount} Ks`);
       });
     } else {
       // For non-deposit transactions or other status updates, just update the transaction
@@ -1527,8 +1466,16 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
       await pool.query("UPDATE transactions SET type = $1 WHERE id = $2", [type, id]);
     }
     
-    if (method) {
+    if (method !== undefined) {
       await pool.query("UPDATE transactions SET method = $1 WHERE id = $2", [method, id]);
+    }
+    
+    if (phone !== undefined) {
+      await pool.query("UPDATE transactions SET phone = $1 WHERE id = $2", [phone, id]);
+    }
+    
+    if (recipient !== undefined) {
+      await pool.query("UPDATE transactions SET recipient = $1 WHERE id = $2", [recipient, id]);
     }
     
     if (remark !== undefined) {

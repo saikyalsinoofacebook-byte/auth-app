@@ -665,9 +665,19 @@ async function loadTransactions() {
                 label: transaction.type || 'Unknown'
             };
             
+            // Ensure transaction has required fields
+            const safeTransaction = {
+                id: transaction.id || 'N/A',
+                user_email: transaction.user_email || 'Unknown',
+                type: transaction.type || 'unknown',
+                amount: transaction.amount || 0,
+                status: transaction.status || 'unknown',
+                created_at: transaction.created_at || new Date().toISOString()
+            };
+            
             row.innerHTML = `
-                <td><span class="badge bg-primary">#${transaction.id}</span></td>
-                <td>${transaction.user_email}</td>
+                <td><span class="badge bg-primary">#${safeTransaction.id}</span></td>
+                <td>${safeTransaction.user_email}</td>
                 <td>
                     <div class="transaction-type">
                         <i class="bi ${typeInfo.icon}" style="color: ${typeInfo.color}; margin-right: 0.5rem;"></i>
@@ -675,26 +685,26 @@ async function loadTransactions() {
                     </div>
                 </td>
                 <td>
-                    <span class="amount-badge ${transaction.amount > 0 ? 'positive' : 'negative'}">
-                        ${transaction.amount > 0 ? '+' : ''}${transaction.amount} Ks
+                    <span class="amount-badge ${safeTransaction.amount > 0 ? 'positive' : 'negative'}">
+                        ${safeTransaction.amount > 0 ? '+' : ''}${safeTransaction.amount} Ks
                     </span>
                 </td>
-                <td><span class="status-badge status-${transaction.status.toLowerCase()}">${transaction.status}</span></td>
-                <td>${formatDate(transaction.created_at)}</td>
+                <td><span class="status-badge status-${safeTransaction.status.toLowerCase()}">${safeTransaction.status}</span></td>
+                <td>${formatDate(safeTransaction.created_at)}</td>
                 <td>
                     <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewTransaction(${transaction.id})" title="View Details">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewTransaction(${safeTransaction.id})" title="View Details">
                         <i class="bi bi-eye"></i>
                     </button>
-                    ${transaction.status === 'Pending' && transaction.type === 'deposit' ? `
-                            <button class="btn btn-sm btn-outline-success" onclick="approveTransaction(${transaction.id})" title="Approve Transaction">
+                    ${safeTransaction.status === 'Pending' && safeTransaction.type === 'deposit' ? `
+                            <button class="btn btn-sm btn-outline-success" onclick="approveTransaction(${safeTransaction.id})" title="Approve Transaction">
                             <i class="bi bi-check"></i>
                         </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="rejectTransaction(${transaction.id})" title="Reject Transaction">
+                            <button class="btn btn-sm btn-outline-danger" onclick="rejectTransaction(${safeTransaction.id})" title="Reject Transaction">
                                 <i class="bi bi-x"></i>
                         </button>
                     ` : ''}
-                        <button class="btn btn-sm btn-outline-warning" onclick="editTransaction(${transaction.id})" title="Edit Transaction">
+                        <button class="btn btn-sm btn-outline-warning" onclick="editTransaction(${safeTransaction.id})" title="Edit Transaction">
                             <i class="bi bi-pencil"></i>
                         </button>
                     </div>
@@ -2330,6 +2340,38 @@ function createTransactionModal(transaction, mode) {
                                 <option value="failed" ${transaction.status === 'failed' ? 'selected' : ''}>Failed</option>
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Method</label>
+                            <input type="text" class="form-control" name="method" value="${transaction.method || ''}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" name="phone" value="${transaction.phone || ''}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Recipient</label>
+                            <input type="text" class="form-control" name="recipient" value="${transaction.recipient || ''}" ${mode === 'view' ? 'readonly' : ''}>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Remark</label>
+                            <textarea class="form-control" name="remark" rows="2" ${mode === 'view' ? 'readonly' : ''}>${transaction.remark || ''}</textarea>
+                        </div>
+                        ${transaction.screenshot ? `
+                            <div class="mb-3">
+                                <label class="form-label">Screenshot</label>
+                                <div class="screenshot-container">
+                                    <img src="${transaction.screenshot.startsWith('http') ? transaction.screenshot : 'https://arthur-game-shop.onrender.com' + transaction.screenshot}" 
+                                         class="img-fluid" 
+                                         style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <div class="screenshot-error" style="display: none; padding: 20px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; text-align: center;">
+                                        <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                                        <p class="text-muted mt-2">Screenshot not available</p>
+                                        <small class="text-muted">Path: ${transaction.screenshot}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -2537,7 +2579,11 @@ function saveTransaction(transactionId) {
     const transactionData = {
         type: transactionType,
         amount: amount,
-        status: formData.get('status')
+        status: formData.get('status'),
+        method: formData.get('method') || null,
+        phone: formData.get('phone') || null,
+        recipient: formData.get('recipient') || null,
+        remark: formData.get('remark') || null
     };
     
     console.log(`💾 Saving transaction ${transactionId}:`, transactionData);

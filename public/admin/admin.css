@@ -832,6 +832,36 @@ input[readonly]:focus {
     margin-top: 0.25rem;
 }
 
+/* Transaction modal improvements */
+.modal-dialog {
+    max-width: 600px;
+}
+
+.screenshot-container {
+    margin-top: 10px;
+}
+
+.screenshot-container img {
+    transition: transform 0.2s ease;
+}
+
+.screenshot-container img:hover {
+    transform: scale(1.05);
+}
+
+/* Form field improvements */
+.form-control[readonly] {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
 .modal-header {
     background: #34495e;
     color: white;
