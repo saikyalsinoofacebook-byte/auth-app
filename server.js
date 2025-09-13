@@ -588,14 +588,418 @@ app.post("/api/deposit/approve/:id", async (req, res) => {
  * 📱 Telegram Authentication
  *******************************/
 
-// Telegram authentication callback
+// Store pending login requests (in production, use Redis or database)
+const pendingLogins = new Map();
+
+// Telegram Bot API configuration
+const TELEGRAM_BOT_TOKEN = "8256194856:AAGqJPELBjSovJtQqnfOni4CuNa6HX1Xy_I";
+const TELEGRAM_BOT_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+
+// Generate random security code
+function generateSecurityCode() {
+  return Math.floor(1000000 + Math.random() * 9000000);
+}
+
+// Send login request to user via Telegram bot
+async function sendTelegramLoginRequest(telegramUserId, securityCode) {
+  try {
+    const message = `🔐 **Login Request for Arthur Game Shop**\n\n` +
+                   `Security Code: \`${securityCode}\`\n\n` +
+                   `If you requested this login, please confirm below:`;
+    
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "✅ Confirm Login", callback_data: `confirm_${securityCode}` },
+          { text: "❌ Decline", callback_data: `decline_${securityCode}` }
+        ]
+      ]
+    };
+    
+    const response = await fetch(`${TELEGRAM_BOT_URL}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: telegramUserId,
+        text: message,
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
+      })
+    });
+    
+    const result = await response.json();
+    console.log("📱 Telegram login request sent:", result);
+    return result.ok;
+  } catch (error) {
+    console.error("❌ Failed to send Telegram login request:", error);
+    return false;
+  }
+}
+
+// Handle Telegram bot webhook for login confirmations
+app.post("/api/telegram-webhook", express.json(), async (req, res) => {
+  try {
+    const { callback_query } = req.body;
+    
+    if (!callback_query) {
+      return res.status(200).send("OK");
+    }
+    
+    const { data, from, message } = callback_query;
+    const telegramUserId = from.id;
+    const username = from.username;
+    const firstName = from.first_name;
+    const lastName = from.last_name || '';
+    
+    console.log("📱 Telegram callback received:", { data, telegramUserId, username });
+    
+    if (data.startsWith('confirm_')) {
+      const securityCode = data.replace('confirm_', '');
+      const loginData = pendingLogins.get(securityCode);
+      
+      if (loginData && loginData.telegramUserId === telegramUserId) {
+        // Login confirmed - create or update user
+        const fullName = `${firstName} ${lastName}`.trim();
+        const email = `telegram_${telegramUserId}@arthur-gameshop.com`;
+        
+        // Check if user exists
+        const existingUser = await pool.query(
+          "SELECT * FROM users WHERE telegram_id = $1", 
+          [telegramUserId.toString()]
+        );
+        
+        let user;
+        
+        if (existingUser.rows.length > 0) {
+          // Update existing user
+          user = existingUser.rows[0];
+          await pool.query(
+            "UPDATE users SET first_name = $1, last_name = $2, username = $3, updated_at = NOW() WHERE telegram_id = $4",
+            [firstName, lastName, username, telegramUserId.toString()]
+          );
+        } else {
+          // Create new user
+          const newUser = await pool.query(
+            "INSERT INTO users (name, email, telegram_id, first_name, last_name, username, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING *",
+            [fullName, email, telegramUserId.toString(), firstName, lastName, username]
+          );
+          
+          user = newUser.rows[0];
+          
+          // Create wallet for new user
+          await pool.query(
+            "INSERT INTO wallets (user_id, user_name, user_email, balance, tokens, created_at) VALUES ($1, $2, $3, 0, 0, NOW())",
+            [user.id, user.name, user.email]
+          );
+        }
+        
+        // Generate JWT token
+        const token = jwt.sign(
+          { 
+            userId: user.id, 
+            email: user.email, 
+            name: user.name,
+            telegramId: user.telegram_id 
+          },
+          JWT_SECRET,
+          { expiresIn: '7d' }
+        );
+        
+        // Update login status
+        loginData.status = 'confirmed';
+        loginData.user = user;
+        loginData.token = token;
+        
+        // Send confirmation message
+        await fetch(`${TELEGRAM_BOT_URL}/answerCallbackQuery`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            callback_query_id: callback_query.id,
+            text: "✅ Login confirmed! You can now return to the website.",
+            show_alert: true
+          })
+        });
+        
+        // Update the message
+        await fetch(`${TELEGRAM_BOT_URL}/editMessageText`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: telegramUserId,
+            message_id: message.message_id,
+            text: `✅ **Login Confirmed!**\n\nWelcome to Arthur Game Shop, ${firstName}!\n\nYou can now return to the website.`,
+            parse_mode: 'Markdown'
+          })
+        });
+        
+        console.log("✅ Login confirmed for user:", user.email);
+      } else {
+        await fetch(`${TELEGRAM_BOT_URL}/answerCallbackQuery`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            callback_query_id: callback_query.id,
+            text: "❌ Invalid or expired login request.",
+            show_alert: true
+          })
+        });
+      }
+    } else if (data.startsWith('decline_')) {
+      const securityCode = data.replace('decline_', '');
+      const loginData = pendingLogins.get(securityCode);
+      
+      if (loginData && loginData.telegramUserId === telegramUserId) {
+        loginData.status = 'declined';
+        
+        await fetch(`${TELEGRAM_BOT_URL}/answerCallbackQuery`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            callback_query_id: callback_query.id,
+            text: "❌ Login declined.",
+            show_alert: true
+          })
+        });
+        
+        await fetch(`${TELEGRAM_BOT_URL}/editMessageText`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: telegramUserId,
+            message_id: message.message_id,
+            text: `❌ **Login Declined**\n\nLogin request has been declined.`,
+            parse_mode: 'Markdown'
+          })
+        });
+        
+        console.log("❌ Login declined for user:", telegramUserId);
+      }
+    }
+    
+    res.status(200).send("OK");
+  } catch (error) {
+    console.error("❌ Telegram webhook error:", error);
+    res.status(500).send("Error");
+  }
+});
+
+// Start Telegram login process
+app.post("/api/telegram-login-start", async (req, res) => {
+  try {
+    const { telegramUserId } = req.body;
+    
+    if (!telegramUserId) {
+      return res.status(400).json({ error: "Telegram user ID is required" });
+    }
+    
+    // Generate security code
+    const securityCode = generateSecurityCode();
+    
+    // Store pending login
+    pendingLogins.set(securityCode, {
+      telegramUserId: telegramUserId.toString(),
+      securityCode,
+      status: 'pending',
+      createdAt: new Date()
+    });
+    
+    // Send login request via Telegram bot
+    const sent = await sendTelegramLoginRequest(telegramUserId, securityCode);
+    
+    if (sent) {
+      res.json({ 
+        success: true, 
+        message: "Login request sent to your Telegram",
+        securityCode 
+      });
+    } else {
+      res.status(500).json({ error: "Failed to send login request" });
+    }
+  } catch (error) {
+    console.error("❌ Telegram login start error:", error);
+    res.status(500).json({ error: "Failed to start login process" });
+  }
+});
+
+// Check login status
+app.get("/api/telegram-login-status/:securityCode", async (req, res) => {
+  try {
+    const { securityCode } = req.params;
+    const loginData = pendingLogins.get(securityCode);
+    
+    if (!loginData) {
+      return res.status(404).json({ error: "Login request not found" });
+    }
+    
+    // Clean up expired requests (older than 5 minutes)
+    if (new Date() - loginData.createdAt > 5 * 60 * 1000) {
+      pendingLogins.delete(securityCode);
+      return res.status(410).json({ error: "Login request expired" });
+    }
+    
+    if (loginData.status === 'confirmed') {
+      // Clean up the pending login
+      pendingLogins.delete(securityCode);
+      
+      res.json({
+        success: true,
+        status: 'confirmed',
+        user: loginData.user,
+        token: loginData.token
+      });
+    } else if (loginData.status === 'declined') {
+      pendingLogins.delete(securityCode);
+      res.json({
+        success: false,
+        status: 'declined'
+      });
+    } else {
+      res.json({
+        success: false,
+        status: 'pending'
+      });
+    }
+  } catch (error) {
+    console.error("❌ Check login status error:", error);
+    res.status(500).json({ error: "Failed to check login status" });
+  }
+});
+
+// Handle login confirmation from Telegram bot
+app.post("/api/telegram-login-confirm", async (req, res) => {
+  try {
+    const { securityCode, telegramUserId, firstName, username, chatId } = req.body;
+    
+    console.log("🤖 Bot login confirmation received:", { securityCode, telegramUserId, firstName });
+    
+    // Find the pending login
+    const loginData = pendingLogins.get(securityCode);
+    
+    if (!loginData || loginData.telegramUserId !== telegramUserId) {
+      return res.status(404).json({ error: "Invalid or expired login request" });
+    }
+    
+    // Check if user already exists
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE telegram_id = $1", 
+      [telegramUserId]
+    );
+    
+    let user;
+    
+    if (existingUser.rows.length > 0) {
+      // Update existing user
+      user = existingUser.rows[0];
+      await pool.query(
+        "UPDATE users SET first_name = $1, username = $2, updated_at = NOW() WHERE telegram_id = $3",
+        [firstName, username, telegramUserId]
+      );
+      console.log("✅ Updated existing user:", user.email);
+    } else {
+      // Create new user
+      const fullName = firstName;
+      const email = `telegram_${telegramUserId}@arthur-gameshop.com`;
+      
+      const newUser = await pool.query(
+        "INSERT INTO users (name, email, telegram_id, first_name, username, created_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *",
+        [fullName, email, telegramUserId, firstName, username]
+      );
+      
+      user = newUser.rows[0];
+      
+      // Create wallet for new user
+      await pool.query(
+        "INSERT INTO wallets (user_id, user_name, user_email, balance, tokens, created_at) VALUES ($1, $2, $3, 0, 0, NOW())",
+        [user.id, user.name, user.email]
+      );
+      
+      console.log("✅ Created new user:", user.email);
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        name: user.name,
+        telegramId: user.telegram_id 
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    // Update login data
+    loginData.status = 'confirmed';
+    loginData.user = user;
+    loginData.token = token;
+    
+    res.json({
+      success: true,
+      user: user,
+      token: token
+    });
+    
+  } catch (error) {
+    console.error("❌ Bot login confirmation error:", error);
+    res.status(500).json({ error: "Failed to confirm login" });
+  }
+});
+
+// Get user info by Telegram ID (for bot balance command)
+app.get("/api/telegram-user-info/:telegramUserId", async (req, res) => {
+  try {
+    const { telegramUserId } = req.params;
+    
+    const result = await pool.query(`
+      SELECT u.id, u.name, u.email, u.telegram_id, u.first_name, u.username,
+             COALESCE(w.balance, 0) as balance, COALESCE(w.tokens, 0) as tokens
+      FROM users u
+      LEFT JOIN wallets w ON u.id = w.user_id
+      WHERE u.telegram_id = $1
+    `, [telegramUserId]);
+    
+    if (result.rows.length > 0) {
+      res.json({
+        success: true,
+        user: result.rows[0]
+      });
+    } else {
+      res.json({
+        success: false,
+        error: "User not found"
+      });
+    }
+    
+  } catch (error) {
+    console.error("❌ Get user info error:", error);
+    res.status(500).json({ error: "Failed to get user info" });
+  }
+});
+
+// Telegram auth verification function
+function checkTelegramAuth(data, botToken) {
+  const hash = data.hash;
+  delete data.hash;
+  
+  const secret = crypto.createHash('sha256').update(botToken).digest();
+  const dataCheckString = Object.keys(data).sort().map(key => `${key}=${data[key]}`).join('\n');
+  const calculatedHash = crypto.createHmac('sha256', secret).update(dataCheckString).digest('hex');
+  
+  return calculatedHash === hash;
+}
+
+// Store pending confirmation codes
+const pendingConfirmations = new Map();
+
+// Telegram authentication callback with verification
 app.get("/api/telegram-auth-callback", async (req, res) => {
   console.log("=== TELEGRAM AUTH CALLBACK ===");
   console.log("Query params:", req.query);
   
   const { id, first_name, last_name, username, photo_url, auth_date, hash } = req.query;
   
-  // Verify the authentication data (basic validation)
+  // Verify the authentication data
   if (!id || !first_name || !auth_date || !hash) {
     console.log("❌ Missing required Telegram auth data");
     return res.status(400).send(`
@@ -612,79 +1016,71 @@ app.get("/api/telegram-auth-callback", async (req, res) => {
     `);
   }
   
+  // Verify Telegram authentication hash
+  const authData = { id, first_name, last_name, username, photo_url, auth_date, hash };
+  if (!checkTelegramAuth(authData, TELEGRAM_BOT_TOKEN)) {
+    console.log("❌ Invalid Telegram authentication hash");
+    return res.status(400).send(`
+      <html>
+        <head><title>Authentication Failed</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
+            <h2 style="color: #e74c3c;">Authentication Failed</h2>
+            <p>Invalid authentication signature from Telegram.</p>
+            <a href="/login.html" style="color: #3498db; text-decoration: none;">← Back to Login</a>
+          </div>
+        </body>
+      </html>
+    `);
+  }
+  
   try {
-    // Create user data from Telegram info
-    const telegramUser = {
-      telegram_id: id,
-      first_name: first_name,
-      last_name: last_name || '',
+    // Generate confirmation code
+    const confirmationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store pending confirmation
+    pendingConfirmations.set(confirmationCode, {
+      telegramUserId: id,
+      firstName: first_name,
+      lastName: last_name || '',
       username: username || '',
-      photo_url: photo_url || '',
-      auth_date: auth_date
-    };
+      photoUrl: photo_url || '',
+      authDate: auth_date,
+      createdAt: new Date()
+    });
     
-    console.log("📱 Telegram user data:", telegramUser);
+    console.log("📱 Telegram auth verified, confirmation code generated:", confirmationCode);
     
-    // Check if user already exists by telegram_id
-    const existingUser = await pool.query(
-      "SELECT * FROM users WHERE telegram_id = $1", 
-      [telegramUser.telegram_id]
-    );
-    
-    let user;
-    
-    if (existingUser.rows.length > 0) {
-      // User exists, update their info
-      user = existingUser.rows[0];
-      console.log("✅ Existing user found:", user.email);
+    // Send confirmation code via Telegram bot
+    try {
+      const message = `🔐 **Arthur Game Shop Login Confirmation**\n\n` +
+                     `Hello ${first_name}!\n\n` +
+                     `Your login confirmation code is:\n` +
+                     `\`${confirmationCode}\`\n\n` +
+                     `Please enter this code on the website to complete your login.\n\n` +
+                     `This code will expire in 5 minutes.`;
       
-      // Update user info with latest Telegram data
-      await pool.query(
-        "UPDATE users SET first_name = $1, last_name = $2, username = $3, photo_url = $4, updated_at = NOW() WHERE telegram_id = $5",
-        [telegramUser.first_name, telegramUser.last_name, telegramUser.username, telegramUser.photo_url, telegramUser.telegram_id]
-      );
-    } else {
-      // Create new user
-      const fullName = `${telegramUser.first_name} ${telegramUser.last_name}`.trim();
-      const email = `telegram_${telegramUser.telegram_id}@arthur-gameshop.com`;
+      const response = await fetch(`${TELEGRAM_BOT_URL}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: id,
+          text: message,
+          parse_mode: 'Markdown'
+        })
+      });
       
-      console.log("🆕 Creating new user with email:", email);
-      
-      const newUser = await pool.query(
-        "INSERT INTO users (name, email, telegram_id, first_name, last_name, username, photo_url, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *",
-        [fullName, email, telegramUser.telegram_id, telegramUser.first_name, telegramUser.last_name, telegramUser.username, telegramUser.photo_url]
-      );
-      
-      user = newUser.rows[0];
-      
-      // Create wallet for new user
-      await pool.query(
-        "INSERT INTO wallets (user_id, user_name, user_email, balance, tokens, created_at) VALUES ($1, $2, $3, 0, 0, NOW())",
-        [user.id, user.name, user.email]
-      );
-      
-      console.log("✅ New user created and wallet initialized");
+      const result = await response.json();
+      console.log("📱 Confirmation code sent:", result.ok ? "Success" : "Failed");
+    } catch (error) {
+      console.error("❌ Failed to send confirmation code:", error);
     }
     
-    // Generate JWT token for the user
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
-        name: user.name,
-        telegramId: user.telegram_id 
-      },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    
-    console.log("🔑 JWT token generated for user:", user.email);
-    
-    // Return success page with auto-redirect
+    // Return confirmation code page
     res.send(`
       <html>
         <head>
-          <title>Login Successful</title>
+          <title>Confirmation Code Sent</title>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <style>
@@ -698,7 +1094,7 @@ app.get("/api/telegram-auth-callback", async (req, res) => {
               align-items: center; 
               justify-content: center; 
             }
-            .success-container { 
+            .confirmation-container { 
               background: white; 
               padding: 40px; 
               border-radius: 15px; 
@@ -707,9 +1103,9 @@ app.get("/api/telegram-auth-callback", async (req, res) => {
               max-width: 400px; 
               width: 90%;
             }
-            .success-icon { 
+            .confirmation-icon { 
               font-size: 60px; 
-              color: #4CAF50; 
+              color: #0088cc; 
               margin-bottom: 20px; 
             }
             h2 { 
@@ -721,63 +1117,69 @@ app.get("/api/telegram-auth-callback", async (req, res) => {
               margin-bottom: 25px; 
               line-height: 1.5; 
             }
-            .user-info { 
+            .code-display { 
               background: #f8f9fa; 
-              padding: 15px; 
+              padding: 20px; 
               border-radius: 8px; 
               margin: 20px 0; 
-              border-left: 4px solid #4CAF50;
+              border: 2px solid #0088cc;
+              font-family: 'Courier New', monospace;
+              font-size: 24px;
+              font-weight: bold;
+              color: #0088cc;
             }
-            .loading { 
-              color: #666; 
-              font-size: 14px; 
+            .instructions {
+              background: #e3f2fd;
+              padding: 15px;
+              border-radius: 8px;
+              margin: 20px 0;
+              border-left: 4px solid #0088cc;
             }
-            .spinner { 
-              border: 3px solid #f3f3f3; 
-              border-top: 3px solid #4CAF50; 
-              border-radius: 50%; 
-              width: 30px; 
-              height: 30px; 
-              animation: spin 1s linear infinite; 
-              margin: 0 auto 15px; 
+            .back-link {
+              color: #0088cc;
+              text-decoration: none;
+              font-weight: 500;
             }
-            @keyframes spin { 
-              0% { transform: rotate(0deg); } 
-              100% { transform: rotate(360deg); } 
+            .back-link:hover {
+              text-decoration: underline;
             }
           </style>
         </head>
         <body>
-          <div class="success-container">
-            <div class="success-icon">✅</div>
-            <h2>Welcome to Arthur Game Shop!</h2>
-            <div class="user-info">
-              <strong>Hello, ${user.name}!</strong><br>
-              <small>Telegram: @${user.username || 'N/A'}</small>
-            </div>
-            <p>You have successfully logged in with Telegram.</p>
-            <div class="spinner"></div>
-            <p class="loading">Redirecting to your dashboard...</p>
-          </div>
-          
-          <script>
-            // Store user data in localStorage
-            localStorage.setItem('user', '${user.name}');
-            localStorage.setItem('email', '${user.email}');
-            localStorage.setItem('token', '${token}');
-            localStorage.setItem('telegramId', '${user.telegram_id}');
+          <div class="confirmation-container">
+            <div class="confirmation-icon">📱</div>
+            <h2>Confirmation Code Sent!</h2>
+            <p>Hello ${first_name}! We've sent a confirmation code to your Telegram.</p>
             
-            // Redirect to home page after 2 seconds
-            setTimeout(() => {
-              window.location.href = '/home.html';
-            }, 2000);
-          </script>
+            <div class="code-display">
+              ${confirmationCode}
+            </div>
+            
+            <div class="instructions">
+              <strong>Next Steps:</strong><br>
+              1. Check your Telegram for the confirmation code<br>
+              2. Return to the website<br>
+              3. Enter the code to complete your login
+            </div>
+            
+            <p style="font-size: 14px; color: #999;">
+              This code will expire in 5 minutes.
+            </p>
+            
+            <a href="/login.html" class="back-link">← Back to Login</a>
+          </div>
         </body>
       </html>
     `);
     
   } catch (error) {
     console.error("❌ Telegram auth error:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      query: req.query
+    });
+    
     res.status(500).send(`
       <html>
         <head><title>Authentication Error</title></head>
@@ -785,11 +1187,99 @@ app.get("/api/telegram-auth-callback", async (req, res) => {
           <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
             <h2 style="color: #e74c3c;">Authentication Error</h2>
             <p>Sorry, there was an error processing your Telegram login. Please try again.</p>
+            <p style="font-size: 12px; color: #666; margin-top: 20px;">
+              Error: ${error.message}
+            </p>
             <a href="/login.html" style="color: #3498db; text-decoration: none;">← Back to Login</a>
           </div>
         </body>
       </html>
     `);
+  }
+});
+
+// Verify confirmation code
+app.post("/api/telegram-verify-code", async (req, res) => {
+  try {
+    const { confirmationCode } = req.body;
+    
+    if (!confirmationCode) {
+      return res.status(400).json({ error: "Confirmation code is required" });
+    }
+    
+    const confirmationData = pendingConfirmations.get(confirmationCode);
+    
+    if (!confirmationData) {
+      return res.status(404).json({ error: "Invalid or expired confirmation code" });
+    }
+    
+    // Check if code is expired (5 minutes)
+    if (new Date() - confirmationData.createdAt > 5 * 60 * 1000) {
+      pendingConfirmations.delete(confirmationCode);
+      return res.status(410).json({ error: "Confirmation code has expired" });
+    }
+    
+    // Check if user already exists
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE telegram_id = $1", 
+      [confirmationData.telegramUserId]
+    );
+    
+    let user;
+    
+    if (existingUser.rows.length > 0) {
+      // Update existing user
+      user = existingUser.rows[0];
+      await pool.query(
+        "UPDATE users SET first_name = $1, last_name = $2, username = $3, photo_url = $4, updated_at = NOW() WHERE telegram_id = $5",
+        [confirmationData.firstName, confirmationData.lastName, confirmationData.username, confirmationData.photoUrl, confirmationData.telegramUserId]
+      );
+      console.log("✅ Updated existing user:", user.email);
+    } else {
+      // Create new user
+      const fullName = `${confirmationData.firstName} ${confirmationData.lastName}`.trim();
+      const email = `telegram_${confirmationData.telegramUserId}@arthur-gameshop.com`;
+      
+      const newUser = await pool.query(
+        "INSERT INTO users (name, email, telegram_id, first_name, last_name, username, photo_url, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *",
+        [fullName, email, confirmationData.telegramUserId, confirmationData.firstName, confirmationData.lastName, confirmationData.username, confirmationData.photoUrl]
+      );
+      
+      user = newUser.rows[0];
+      
+      // Create wallet for new user
+      await pool.query(
+        "INSERT INTO wallets (user_id, user_name, user_email, balance, tokens, created_at) VALUES ($1, $2, $3, 0, 0, NOW())",
+        [user.id, user.name, user.email]
+      );
+      
+      console.log("✅ Created new user:", user.email);
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        name: user.name,
+        telegramId: user.telegram_id 
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    // Clean up confirmation code
+    pendingConfirmations.delete(confirmationCode);
+    
+    res.json({
+      success: true,
+      user: user,
+      token: token
+    });
+    
+  } catch (error) {
+    console.error("❌ Verify confirmation code error:", error);
+    res.status(500).json({ error: "Failed to verify confirmation code" });
   }
 });
 
@@ -955,8 +1445,8 @@ router.post("/api/gift/spin", async (req, res) => {
       const currentWallet = await pool.query("SELECT balance FROM wallets WHERE user_email = $1", [userEmail]);
       const currentBalance = currentWallet.rows[0]?.balance || 0;
       console.log(`- Current Balance: ${currentBalance} Ks`);
-      
-      await pool.query(
+
+    await pool.query(
         `UPDATE wallets SET balance = balance + $1 WHERE user_email = $2`,
         [prizeAmount, userEmail]
       );
@@ -1915,6 +2405,29 @@ async function initializeTelegramColumns() {
 
 // Initialize Telegram columns on startup
 initializeTelegramColumns();
+
+// Set up Telegram bot webhook
+async function setupTelegramWebhook() {
+  try {
+    const webhookUrl = `${process.env.NODE_ENV === "production" 
+      ? "https://arthur-game-shop.onrender.com" 
+      : "https://your-ngrok-url.ngrok.io"}/api/telegram-webhook`;
+    
+    const response = await fetch(`${TELEGRAM_BOT_URL}/setWebhook`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: webhookUrl })
+    });
+    
+    const result = await response.json();
+    console.log("📱 Telegram webhook setup:", result);
+  } catch (error) {
+    console.log("ℹ️ Telegram webhook setup:", error.message);
+  }
+}
+
+// Set up webhook on startup
+setupTelegramWebhook();
 
 /* ----------------- START ----------------- */
 app.listen(PORT, () => {
