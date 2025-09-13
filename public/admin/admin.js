@@ -2219,8 +2219,12 @@ function createTransactionModal(transaction, mode) {
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Amount (Ks)</label>
-                            <input type="number" class="form-control" name="amount" value="${transaction.amount || 0}" ${mode === 'view' || transaction.type === 'deposit' ? 'readonly' : ''}>
+                            <input type="number" class="form-control" name="amount" value="${transaction.amount || 0}" 
+                                   ${mode === 'view' || transaction.type === 'deposit' ? 'readonly' : ''}
+                                   ${transaction.type === 'deposit' ? 'data-original-amount="' + transaction.amount + '"' : ''}
+                                   min="0" max="1000000" step="0.01">
                             ${transaction.type === 'deposit' ? '<small class="form-text text-muted">Deposit amounts cannot be modified for security reasons.</small>' : ''}
+                            ${transaction.type === 'deposit' ? '<small class="form-text text-warning">Original amount: ' + transaction.amount + ' Ks</small>' : ''}
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Status</label>
@@ -2411,11 +2415,36 @@ function saveTransaction(transactionId) {
     const form = document.getElementById('transaction-form');
     const formData = new FormData(form);
     
+    const transactionType = formData.get('type');
+    const amountInput = form.querySelector('input[name="amount"]');
+    const originalAmount = amountInput.getAttribute('data-original-amount');
+    
+    // Security validation for deposit transactions
+    if (transactionType === 'deposit' && originalAmount) {
+        const currentAmount = formData.get('amount');
+        if (currentAmount !== originalAmount) {
+            console.log(`🚨 SECURITY ALERT: Deposit amount tampering detected!`);
+            console.log(`🚨 Original: ${originalAmount}, Current: ${currentAmount}`);
+            showNotification('Deposit amounts cannot be modified for security reasons!', 'error');
+            addNotification('error', `Security: Deposit amount tampering blocked for transaction #${transactionId}`, 'Just now');
+            return;
+        }
+    }
+    
+    // Validate amount range
+    const amount = parseFloat(formData.get('amount'));
+    if (isNaN(amount) || amount < 0 || amount > 1000000) {
+        showNotification('Invalid amount: must be between 0 and 1,000,000 Ks', 'error');
+        return;
+    }
+    
     const transactionData = {
-        type: formData.get('type'),
-        amount: parseFloat(formData.get('amount')),
+        type: transactionType,
+        amount: amount,
         status: formData.get('status')
     };
+    
+    console.log(`💾 Saving transaction ${transactionId}:`, transactionData);
     
     fetch(`${API_BASE}/api/admin/transactions/${transactionId}`, {
         method: 'PUT',
@@ -2429,15 +2458,18 @@ function saveTransaction(transactionId) {
     .then(data => {
         if (data.success) {
             showNotification('Transaction updated successfully', 'success');
+            addNotification('success', `Transaction updated: #${transactionId}`, 'Just now');
             loadTransactions(); // Reload transactions
             bootstrap.Modal.getInstance(document.querySelector('.modal')).hide();
         } else {
             showNotification('Failed to update transaction', 'error');
+            addNotification('error', `Transaction update failed: ${data.error || 'Unknown error'}`, 'Just now');
         }
     })
     .catch(error => {
         console.error('Update transaction error:', error);
         showNotification('Error updating transaction', 'error');
+        addNotification('error', `Transaction update error: ${error.message}`, 'Just now');
     });
 }
 

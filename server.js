@@ -223,6 +223,29 @@ app.post("/api/deposit", upload.single("screenshot"), async (req, res) => {
     return res.status(400).json({ error: "Missing fields: user_id, amount, and method are required" });
   }
 
+  // Validate and sanitize amount
+  const amountNum = Number(amount);
+  if (isNaN(amountNum) || amountNum <= 0) {
+    console.log("❌ Validation failed: Invalid amount", { amount, amountNum });
+    return res.status(400).json({ error: "Invalid amount: must be a positive number" });
+  }
+
+  // Set reasonable limits for deposit amounts
+  const MIN_DEPOSIT = 100;  // Minimum 100 Ks
+  const MAX_DEPOSIT = 1000000;  // Maximum 1,000,000 Ks
+  
+  if (amountNum < MIN_DEPOSIT) {
+    console.log("❌ Validation failed: Amount too small", { amount: amountNum, min: MIN_DEPOSIT });
+    return res.status(400).json({ error: `Minimum deposit amount is ${MIN_DEPOSIT} Ks` });
+  }
+  
+  if (amountNum > MAX_DEPOSIT) {
+    console.log("❌ Validation failed: Amount too large", { amount: amountNum, max: MAX_DEPOSIT });
+    return res.status(400).json({ error: `Maximum deposit amount is ${MAX_DEPOSIT} Ks` });
+  }
+
+  console.log("✅ Amount validation passed:", { original: amount, sanitized: amountNum });
+
   try {
     // Get user email from user_id
     const userResult = await pool.query("SELECT email FROM users WHERE id = $1", [user_id]);
@@ -233,11 +256,11 @@ app.post("/api/deposit", upload.single("screenshot"), async (req, res) => {
     const user_email = userResult.rows[0].email;
     console.log("✅ User email found:", user_email);
 
-    // Create transaction
+    // Create transaction with sanitized amount
     const tx = await pool.query(
       `INSERT INTO transactions (user_id,user_email,amount,type,status,method,remark,screenshot,created_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING *`,
-      [user_id, user_email, Number(amount), "deposit", "Pending", method, remark || null, screenshot]
+      [user_id, user_email, amountNum, "deposit", "Pending", method, remark || null, screenshot]
     );
 
     console.log("✅ Transaction created:", tx.rows[0]);
@@ -761,6 +784,73 @@ router.get("/api/gift/debug", (req, res) => {
     totalNormalPrizes: NORMAL_PRIZES.length,
     totalPrizes: BIG_PRIZES.length + NORMAL_PRIZES.length
   });
+});
+
+// Create transaction audit log table if it doesn't exist
+async function createTransactionAuditTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS transaction_audit_log (
+        id SERIAL PRIMARY KEY,
+        transaction_id INTEGER NOT NULL,
+        user_email VARCHAR(255) NOT NULL,
+        action VARCHAR(50) NOT NULL,
+        field_name VARCHAR(50),
+        old_value TEXT,
+        new_value TEXT,
+        admin_email VARCHAR(255),
+        admin_token VARCHAR(500),
+        ip_address VARCHAR(45),
+        user_agent TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    console.log("✅ Transaction audit log table created/verified");
+  } catch (err) {
+    console.error("❌ Error creating audit table:", err);
+  }
+}
+
+// Initialize audit table
+createTransactionAuditTable();
+
+// Function to log transaction changes
+async function logTransactionChange(transactionId, userEmail, action, fieldName, oldValue, newValue, adminToken, req) {
+  try {
+    const adminEmail = adminToken ? 'admin@admin.xyz1#' : 'system';
+    const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    
+    await pool.query(`
+      INSERT INTO transaction_audit_log 
+      (transaction_id, user_email, action, field_name, old_value, new_value, admin_email, admin_token, ip_address, user_agent)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `, [transactionId, userEmail, action, fieldName, oldValue, newValue, adminEmail, adminToken, ipAddress, userAgent]);
+    
+    console.log(`📝 Audit log: ${action} on transaction ${transactionId} - ${fieldName}: ${oldValue} → ${newValue}`);
+  } catch (err) {
+    console.error("❌ Error logging transaction change:", err);
+  }
+}
+
+// ✅ Debug endpoint to view transaction audit logs
+router.get("/api/debug/audit/:transactionId", async (req, res) => {
+  const { transactionId } = req.params;
+  try {
+    const auditLogs = await pool.query(
+      "SELECT * FROM transaction_audit_log WHERE transaction_id = $1 ORDER BY created_at DESC",
+      [transactionId]
+    );
+    
+    res.json({
+      transactionId,
+      auditLogs: auditLogs.rows,
+      totalChanges: auditLogs.rows.length
+    });
+  } catch (err) {
+    console.error("Debug audit error:", err);
+    res.status(500).json({ error: "Debug failed" });
+  }
 });
 
 // ✅ Debug endpoint to check user wallet and transaction history
@@ -1331,11 +1421,20 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
     if (status === 'Completed' && transaction.type === 'deposit' && transaction.status === 'Pending') {
       console.log(`🔍 DEPOSIT APPROVAL DEBUG:`);
       console.log(`- Transaction ID: ${id}`);
-      console.log(`- Transaction Amount: ${transaction.amount}`);
+      console.log(`- Original Transaction Amount: ${transaction.amount}`);
+      console.log(`- Requested Amount Change: ${amount !== undefined ? amount : 'No change'}`);
       console.log(`- User Email: ${transaction.user_email}`);
       console.log(`- Current Status: ${transaction.status}`);
       console.log(`- Request Body:`, req.body);
       console.log(`- Request Headers:`, req.headers);
+      console.log(`- Admin Token: ${req.headers.authorization ? 'Present' : 'Missing'}`);
+      
+      // Log potential tampering
+      if (amount !== undefined && Number(amount) !== Number(transaction.amount)) {
+        console.log(`🚨 SECURITY ALERT: Amount tampering detected!`);
+        console.log(`🚨 Original: ${transaction.amount}, Requested: ${amount}, Difference: ${Number(amount) - Number(transaction.amount)}`);
+        console.log(`🚨 This change will be BLOCKED for security reasons.`);
+      }
       
       await withClient(async (client) => {
         // Lock the transaction row to prevent double processing
@@ -1362,6 +1461,10 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
         await client.query("UPDATE transactions SET status = $1 WHERE id = $2", [status, id]);
         console.log(`- Transaction status updated to: ${status}`);
         
+        // Log status change
+        await logTransactionChange(id, transaction.user_email, 'STATUS_UPDATE', 'status', 
+          transaction.status, status, req.headers.authorization, req);
+        
         // Update wallet balance for deposit
         const depositAmount = Number(transaction.amount);
         console.log(`- Adding to wallet: ${depositAmount}`);
@@ -1373,6 +1476,10 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
         const newWallet = await client.query("SELECT balance FROM wallets WHERE user_email = $1", [transaction.user_email]);
         const newBalance = newWallet.rows[0]?.balance || 0;
         console.log(`- New Wallet Balance: ${newBalance}`);
+        
+        // Log wallet balance change
+        await logTransactionChange(id, transaction.user_email, 'WALLET_CREDIT', 'balance', 
+          currentBalance.toString(), newBalance.toString(), req.headers.authorization, req);
         console.log(`- Balance Increase: ${newBalance - currentBalance}`);
         
         // Check for any other pending deposits for this user
@@ -1402,9 +1509,17 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
       if (transaction.type === 'deposit') {
         console.log(`🔒 SECURITY: Amount change blocked for deposit transaction ${id}. Original amount: ${transaction.amount}, Requested amount: ${amount}`);
         console.log(`🔒 SECURITY: Deposit amounts cannot be modified to prevent fraud. Only status can be changed.`);
+        
+        // Log the tampering attempt
+        await logTransactionChange(id, transaction.user_email, 'TAMPERING_ATTEMPT', 'amount', 
+          transaction.amount.toString(), amount.toString(), req.headers.authorization, req);
       } else {
         await pool.query("UPDATE transactions SET amount = $1 WHERE id = $2", [amount, id]);
         console.log(`✅ Amount updated for transaction ${id}: ${amount}`);
+        
+        // Log legitimate amount change
+        await logTransactionChange(id, transaction.user_email, 'AMOUNT_UPDATE', 'amount', 
+          transaction.amount.toString(), amount.toString(), req.headers.authorization, req);
       }
     }
     
