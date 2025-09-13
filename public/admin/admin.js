@@ -1414,7 +1414,20 @@ function approveTransaction(transactionId) {
     });
 }
 
+// Track processing transactions to prevent double-clicks
+const processingTransactions = new Set();
+
 async function updateTransactionStatus(transactionId, status) {
+    // Prevent double-processing
+    if (processingTransactions.has(transactionId)) {
+        console.log(`⚠️ Transaction ${transactionId} is already being processed`);
+        showNotification('Transaction is already being processed...', 'warning');
+        return;
+    }
+    
+    processingTransactions.add(transactionId);
+    console.log(`🔄 Processing transaction ${transactionId} with status: ${status}`);
+    
     try {
         const response = await fetch(`${API_BASE}/api/admin/transactions/${transactionId}`, {
             method: 'PUT',
@@ -1427,15 +1440,15 @@ async function updateTransactionStatus(transactionId, status) {
         
         if (response.ok) {
             const data = await response.json();
-        if (data.success) {
-            showNotification(`Transaction ${status} successfully`, 'success');
-            addNotification('success', `Transaction ${status}: #${transactionId}`, 'Just now');
-            loadTransactions();
-            closeModal();
-        } else {
-            showNotification(data.error || 'Failed to update transaction', 'error');
-            addNotification('error', `Transaction update failed: ${data.error || 'Unknown error'}`, 'Just now');
-        }
+            if (data.success) {
+                showNotification(`Transaction ${status} successfully`, 'success');
+                addNotification('success', `Transaction ${status}: #${transactionId}`, 'Just now');
+                loadTransactions();
+                closeModal();
+            } else {
+                showNotification(data.error || 'Failed to update transaction', 'error');
+                addNotification('error', `Transaction update failed: ${data.error || 'Unknown error'}`, 'Just now');
+            }
         } else {
             const errorData = await response.json();
             showNotification(errorData.error || 'Failed to update transaction', 'error');
@@ -1443,6 +1456,12 @@ async function updateTransactionStatus(transactionId, status) {
     } catch (error) {
         console.error('Update transaction error:', error);
         showNotification('Error updating transaction: ' + error.message, 'error');
+    } finally {
+        // Remove from processing set after 2 seconds to allow retry if needed
+        setTimeout(() => {
+            processingTransactions.delete(transactionId);
+            console.log(`✅ Transaction ${transactionId} processing completed`);
+        }, 2000);
     }
 }
 
@@ -2200,7 +2219,8 @@ function createTransactionModal(transaction, mode) {
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Amount (Ks)</label>
-                            <input type="number" class="form-control" name="amount" value="${transaction.amount || 0}" ${mode === 'view' ? 'readonly' : ''}>
+                            <input type="number" class="form-control" name="amount" value="${transaction.amount || 0}" ${mode === 'view' || transaction.type === 'deposit' ? 'readonly' : ''}>
+                            ${transaction.type === 'deposit' && mode === 'edit' ? '<small class="form-text text-muted"><i class="bi bi-info-circle"></i> Deposit amounts cannot be modified for security reasons</small>' : ''}
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Status</label>

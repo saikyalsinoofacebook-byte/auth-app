@@ -763,6 +763,45 @@ router.get("/api/gift/debug", (req, res) => {
   });
 });
 
+// ✅ Debug endpoint to check user wallet and transaction history
+router.get("/api/debug/user/:email", async (req, res) => {
+  const { email } = req.params;
+  try {
+    // Get user wallet
+    const wallet = await pool.query("SELECT * FROM wallets WHERE user_email = $1", [email]);
+    
+    // Get all transactions for this user
+    const transactions = await pool.query(
+      "SELECT id, type, amount, status, remark, created_at FROM transactions WHERE user_email = $1 ORDER BY created_at DESC",
+      [email]
+    );
+    
+    // Calculate total money added from deposits
+    const depositTotal = transactions.rows
+      .filter(tx => tx.type === 'deposit' && tx.status === 'Completed')
+      .reduce((sum, tx) => sum + Number(tx.amount), 0);
+    
+    // Calculate total money added from gifts
+    const giftTotal = transactions.rows
+      .filter(tx => tx.type === 'gift' && tx.status === 'Completed')
+      .reduce((sum, tx) => sum + Number(tx.amount), 0);
+    
+    res.json({
+      email,
+      wallet: wallet.rows[0] || null,
+      transactions: transactions.rows,
+      totals: {
+        depositTotal,
+        giftTotal,
+        expectedBalance: depositTotal + giftTotal
+      }
+    });
+  } catch (err) {
+    console.error("Debug user error:", err);
+    res.status(500).json({ error: "Debug failed" });
+  }
+});
+
 // ✅ User Gift Spin State
 router.get("/api/gift/state/:email", async (req, res) => {
   const { email } = req.params;
@@ -1295,8 +1334,25 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
       console.log(`- Transaction Amount: ${transaction.amount}`);
       console.log(`- User Email: ${transaction.user_email}`);
       console.log(`- Current Status: ${transaction.status}`);
+      console.log(`- Request Body:`, req.body);
+      console.log(`- Request Headers:`, req.headers);
       
       await withClient(async (client) => {
+        // Lock the transaction row to prevent double processing
+        const lockedTx = await client.query("SELECT * FROM transactions WHERE id = $1 FOR UPDATE", [id]);
+        if (!lockedTx.rows.length) {
+          console.log(`❌ Transaction ${id} not found during lock`);
+          return;
+        }
+        
+        const lockedTransaction = lockedTx.rows[0];
+        
+        // Check if this transaction was already processed
+        if (lockedTransaction.status === 'Completed') {
+          console.log(`⚠️ WARNING: Transaction ${id} already completed! Skipping wallet update.`);
+          return;
+        }
+        
         // Get current wallet balance before update
         const currentWallet = await client.query("SELECT balance FROM wallets WHERE user_email = $1", [transaction.user_email]);
         const currentBalance = currentWallet.rows[0]?.balance || 0;
@@ -1318,6 +1374,20 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
         const newBalance = newWallet.rows[0]?.balance || 0;
         console.log(`- New Wallet Balance: ${newBalance}`);
         console.log(`- Balance Increase: ${newBalance - currentBalance}`);
+        
+        // Check for any other pending deposits for this user
+        const otherDeposits = await client.query(
+          "SELECT id, amount, status FROM transactions WHERE user_email = $1 AND type = 'deposit' AND status = 'Pending'",
+          [transaction.user_email]
+        );
+        console.log(`- Other pending deposits for ${transaction.user_email}:`, otherDeposits.rows);
+        
+        // Log all transactions for this user to debug
+        const allUserTxs = await client.query(
+          "SELECT id, type, amount, status, created_at FROM transactions WHERE user_email = $1 ORDER BY created_at DESC LIMIT 10",
+          [transaction.user_email]
+        );
+        console.log(`- All recent transactions for ${transaction.user_email}:`, allUserTxs.rows);
       });
     } else {
       // For non-deposit transactions or other status updates, just update the transaction
@@ -1328,7 +1398,13 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
     
     // Handle other field updates
     if (amount !== undefined) {
-      await pool.query("UPDATE transactions SET amount = $1 WHERE id = $2", [amount, id]);
+      // Security: Do not allow amount changes for deposit transactions
+      if (transaction.type === 'deposit') {
+        console.log(`🔒 SECURITY: Amount change blocked for deposit transaction ${id}. Original amount: ${transaction.amount}, Requested amount: ${amount}`);
+      } else {
+        await pool.query("UPDATE transactions SET amount = $1 WHERE id = $2", [amount, id]);
+        console.log(`✅ Amount updated for transaction ${id}: ${amount}`);
+      }
     }
     
     if (type) {
