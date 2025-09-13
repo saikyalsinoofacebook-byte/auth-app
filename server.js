@@ -1401,6 +1401,7 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
       // Security: Do not allow amount changes for deposit transactions
       if (transaction.type === 'deposit') {
         console.log(`🔒 SECURITY: Amount change blocked for deposit transaction ${id}. Original amount: ${transaction.amount}, Requested amount: ${amount}`);
+        console.log(`🔒 SECURITY: Deposit amounts cannot be modified to prevent fraud. Only status can be changed.`);
       } else {
         await pool.query("UPDATE transactions SET amount = $1 WHERE id = $2", [amount, id]);
         console.log(`✅ Amount updated for transaction ${id}: ${amount}`);
