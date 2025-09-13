@@ -1417,21 +1417,66 @@ router.put("/api/admin/transactions/:id", authenticateAdmin, async (req, res) =>
     
     const transaction = txResult.rows[0];
     
-    // FIXED: Simplified deposit confirmation logic to prevent over-crediting
+    // FIXED: Deposit confirmation with database trigger workaround
     if (status === 'Completed' && transaction.type === 'deposit' && transaction.status === 'Pending') {
-      console.log(`🔧 SIMPLE DEPOSIT APPROVAL - Transaction ${id}`);
+      console.log(`🔧 DEPOSIT APPROVAL WITH TRIGGER WORKAROUND - Transaction ${id}`);
+      console.log(`- Amount: ${transaction.amount} Ks`);
+      console.log(`- User: ${transaction.user_email}`);
       
-      // Simple atomic update: transaction status + wallet balance in one go
-      const depositAmount = Number(transaction.amount);
-      console.log(`- Crediting ${depositAmount} Ks to ${transaction.user_email}`);
-      
+      // Use atomic transaction to prevent double processing
       await withClient(async (client) => {
-        // Update transaction status
+        // Lock the transaction row to prevent double processing
+        const lockedTx = await client.query("SELECT * FROM transactions WHERE id = $1 FOR UPDATE", [id]);
+        if (!lockedTx.rows.length) {
+          throw new Error(`Transaction ${id} not found`);
+        }
+        
+        const lockedTransaction = lockedTx.rows[0];
+        
+        // Double-check if this transaction was already processed
+        if (lockedTransaction.status === 'Completed') {
+          console.log(`⚠️ Transaction ${id} already completed - skipping`);
+          return;
+        }
+        
+        // Get current wallet balance
+        const currentWallet = await client.query("SELECT balance FROM wallets WHERE user_email = $1", [transaction.user_email]);
+        const currentBalance = Number(currentWallet.rows[0]?.balance || 0);
+        console.log(`- Current balance: ${currentBalance} Ks`);
+        
+        const depositAmount = Number(transaction.amount);
+        
+        // WORKAROUND: Subtract the amount first to counteract database trigger
+        console.log(`- Step 1: Subtracting ${depositAmount} Ks to counteract database trigger`);
+        await client.query("UPDATE wallets SET balance = balance - $1 WHERE user_email = $2", 
+          [depositAmount, transaction.user_email]);
+        
+        // Update transaction status - this will trigger the database trigger
+        console.log(`- Step 2: Updating transaction status to Completed (triggers database trigger)`);
         await client.query("UPDATE transactions SET status = 'Completed' WHERE id = $1", [id]);
         
-        // Update wallet balance
-        await client.query("UPDATE wallets SET balance = balance + $1 WHERE user_email = $2", 
-          [depositAmount, transaction.user_email]);
+        // The database trigger will add the amount back, resulting in correct balance
+        console.log(`- Step 3: Database trigger will add ${depositAmount} Ks back`);
+        
+        // Verify the final balance
+        const finalWallet = await client.query("SELECT balance FROM wallets WHERE user_email = $1", [transaction.user_email]);
+        const finalBalance = Number(finalWallet.rows[0]?.balance || 0);
+        const actualIncrease = finalBalance - currentBalance;
+        
+        console.log(`- Expected increase: ${depositAmount} Ks`);
+        console.log(`- Actual increase: ${actualIncrease} Ks`);
+        console.log(`- Final balance: ${finalBalance} Ks`);
+        
+        if (actualIncrease !== depositAmount) {
+          console.log(`⚠️ Balance mismatch: expected +${depositAmount}, got +${actualIncrease}`);
+          // If there's still a mismatch, manually correct it
+          const correction = depositAmount - actualIncrease;
+          if (correction !== 0) {
+            console.log(`- Correcting balance by ${correction} Ks`);
+            await client.query("UPDATE wallets SET balance = balance + $1 WHERE user_email = $2", 
+              [correction, transaction.user_email]);
+          }
+        }
         
         console.log(`✅ Deposit ${id} approved: +${depositAmount} Ks`);
       });
