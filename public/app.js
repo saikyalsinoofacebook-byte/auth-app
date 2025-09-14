@@ -264,7 +264,16 @@ document.addEventListener("DOMContentLoaded", () => {
       attempts++;
       
       try {
-        const response = await fetch(`${backendURL}/api/telegram-login-status/${sessionCode}`);
+        console.log(`🔍 Polling attempt ${attempts}/${maxAttempts} for session: ${sessionCode}`);
+        
+        // Try primary endpoint first
+        let response = await fetch(`${backendURL}/api/telegram-login-status/${sessionCode}`);
+        
+        // If 404, try alternative endpoint
+        if (!response.ok && response.status === 404) {
+          console.log("🔄 Primary endpoint 404, trying alternative endpoint...");
+          response = await fetch(`${backendURL}/api/telegram-status/${sessionCode}`);
+        }
         
         // Check if response is ok
         if (!response.ok) {
@@ -280,6 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         const data = await response.json();
+        console.log("📊 Polling response:", data);
         
         if (data.success && data.status === 'confirmed') {
           // Login successful

@@ -1431,22 +1431,67 @@ app.post("/api/telegram-bot-confirm", async (req, res) => {
 app.get("/api/telegram-login-status/:sessionCode", async (req, res) => {
   try {
     const { sessionCode } = req.params;
+    console.log("🔍 Polling request for session:", sessionCode);
+    
+    const sessionData = pendingLoginSessions.get(sessionCode);
+    
+    if (!sessionData) {
+      console.log("❌ Session not found:", sessionCode);
+      return res.status(404).json({ error: "Session not found" });
+    }
+    
+    // Check if session is expired
+    if (new Date() - sessionData.createdAt > 10 * 60 * 1000) {
+      console.log("⏰ Session expired:", sessionCode);
+      pendingLoginSessions.delete(sessionCode);
+      return res.status(410).json({ error: "Session expired" });
+    }
+    
+    if (sessionData.status === 'confirmed') {
+      console.log("✅ Session confirmed:", sessionCode);
+      // Clean up session
+      pendingLoginSessions.delete(sessionCode);
+      
+      res.json({
+        success: true,
+        status: 'confirmed',
+        user: sessionData.user,
+        token: sessionData.token
+      });
+    } else {
+      console.log("⏳ Session pending:", sessionCode);
+      res.json({
+        success: true,
+        status: 'pending',
+        message: 'Waiting for confirmation...'
+      });
+    }
+    
+  } catch (error) {
+    console.error("❌ Check login status error:", error);
+    res.status(500).json({ error: "Failed to check login status" });
+  }
+});
+
+// Alternative polling endpoint (backup)
+app.get("/api/telegram-status/:sessionCode", async (req, res) => {
+  try {
+    const { sessionCode } = req.params;
+    console.log("🔍 Alternative polling request for session:", sessionCode);
+    
     const sessionData = pendingLoginSessions.get(sessionCode);
     
     if (!sessionData) {
       return res.status(404).json({ error: "Session not found" });
     }
     
-    // Check if session is expired
     if (new Date() - sessionData.createdAt > 10 * 60 * 1000) {
       pendingLoginSessions.delete(sessionCode);
       return res.status(410).json({ error: "Session expired" });
     }
     
     if (sessionData.status === 'confirmed') {
-      // Clean up session
       pendingLoginSessions.delete(sessionCode);
-      
       res.json({
         success: true,
         status: 'confirmed',
@@ -1462,7 +1507,7 @@ app.get("/api/telegram-login-status/:sessionCode", async (req, res) => {
     }
     
   } catch (error) {
-    console.error("❌ Check login status error:", error);
+    console.error("❌ Alternative polling error:", error);
     res.status(500).json({ error: "Failed to check login status" });
   }
 });
