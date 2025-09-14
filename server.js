@@ -7,11 +7,15 @@ import cors from "cors";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
+import fetch from "node-fetch";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
 const { Pool } = pg;
 
 const pool = new Pool({
