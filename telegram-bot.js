@@ -7,13 +7,15 @@ const token = '8256194856:AAGqJPELBjSovJtQqnfOni4CuNa6HX1Xy_I';
 // Create bot instance
 const bot = new TelegramBot(token, { polling: true });
 
-// Server URL for API calls - always use Render URL for bot
-const SERVER_URL = 'https://arthur-game-shop.onrender.com';
+// Server URL for API calls - use environment variable or fallback to Render URL
+const SERVER_URL = process.env.SERVER_BASE_URL || 'https://arthur-game-shop.onrender.com';
 
 // Store pending login requests
 const pendingLogins = new Map();
 
 console.log('🤖 Arthur Game Shop Bot started!');
+console.log('🌐 Server URL:', SERVER_URL);
+console.log('🔧 Environment:', process.env.NODE_ENV || 'development');
 
 // Test server connection on startup
 async function testServerConnection() {
@@ -48,7 +50,9 @@ bot.onText(/\/start/, async (msg) => {
     
     try {
       // Send login request to server
-      const response = await fetch(`${SERVER_URL}/api/telegram-bot-confirm`, {
+      const confirmUrl = `${SERVER_URL}/api/telegram-bot-confirm`;
+      console.log('🔗 Calling API:', confirmUrl);
+      const response = await fetch(confirmUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

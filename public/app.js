@@ -88,9 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       
       if (telegramDeepLoginStatus) {
-        telegramDeepLoginStatus.style.display = 'block';
-        telegramDeepLoginStatus.style.visibility = 'visible';
-        telegramDeepLoginStatus.style.opacity = '1';
+        telegramDeepLoginStatus.classList.add('show');
         console.log("✅ Shown deep login status");
       }
       
@@ -332,7 +330,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function resetDeepLinkUI() {
     telegramDeepLoginBtn.style.display = 'flex';
-    telegramDeepLoginStatus.style.display = 'none';
+    telegramDeepLoginStatus.classList.remove('show');
     sessionCodeDisplay.textContent = '';
   }
 
