@@ -2616,10 +2616,11 @@ setupTelegramWebhook();
 /* ----------------- START ----------------- */
 app.listen(PORT, () => {
   console.log("✅ Server running...");
-  const serverUrl = process.env.NODE_ENV === "production" 
+  const serverUrl = process.env.NODE_ENV === "production"
     ? "https://arthur-game-shop.onrender.com"
     : `http://localhost:${PORT}`;
   console.log(`🌐 Server running on ${serverUrl}`);
   console.log("🔧 Environment:", process.env.NODE_ENV || 'development');
   console.log("📊 Database:", process.env.DATABASE_URL ? 'Connected' : 'Not configured');
+  console.log("🚀 Telegram deep link endpoints: /api/telegram-deep-login, /api/telegram-bot-confirm, /api/telegram-login-status/:code");
 });
