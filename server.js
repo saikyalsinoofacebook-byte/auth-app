@@ -2623,4 +2623,5 @@ app.listen(PORT, () => {
   console.log("🔧 Environment:", process.env.NODE_ENV || 'development');
   console.log("📊 Database:", process.env.DATABASE_URL ? 'Connected' : 'Not configured');
   console.log("🚀 Telegram deep link endpoints: /api/telegram-deep-login, /api/telegram-bot-confirm, /api/telegram-login-status/:code");
+  console.log("🔍 Polling endpoint available: GET /api/telegram-login-status/:sessionCode");
 });
