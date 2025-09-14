@@ -295,11 +295,15 @@ document.addEventListener("DOMContentLoaded", () => {
           // Login successful
           clearInterval(pollInterval);
           
-          // Store user data
-          localStorage.setItem("user", data.user.name);
+          // Store complete user data
+          localStorage.setItem("user", JSON.stringify(data.user));
           localStorage.setItem("email", data.user.email);
           localStorage.setItem("token", data.token);
           localStorage.setItem("telegramId", data.user.telegram_id);
+          localStorage.setItem("telegramUsername", data.user.username || '');
+          localStorage.setItem("telegramFirstName", data.user.first_name || '');
+          localStorage.setItem("telegramLastName", data.user.last_name || '');
+          localStorage.setItem("userName", data.user.name);
           
           // Show success message
           showDeepLinkSuccess(data.user);

@@ -18,13 +18,28 @@ function goToTelegram() {
   window.location.href = "https://t.me/YourAdminLink"; // Admin Telegram link
 }
 // User Data Load
-const USER = JSON.parse(localStorage.getItem("user"));
+const userStr = localStorage.getItem("user");
 
-if (!USER) {
+if (!userStr) {
   alert("ကျေးဇူးပြု၍ Login ဝင်ပါ");
   window.location.href = "login.html";
 } else {
-  document.getElementById("username").innerText = USER.name || USER.username || "User";
+  const USER = JSON.parse(userStr);
+  
+  // Display username - prefer Telegram username, then first name, then name
+  let displayName = "User";
+  if (USER.telegram_username && USER.telegram_username !== '') {
+    displayName = `@${USER.telegram_username}`;
+  } else if (USER.first_name) {
+    displayName = USER.first_name;
+    if (USER.last_name) {
+      displayName += ` ${USER.last_name}`;
+    }
+  } else if (USER.name) {
+    displayName = USER.name;
+  }
+  
+  document.getElementById("username").innerText = displayName;
   document.getElementById("useremail").innerText = USER.email || "";
 }
 

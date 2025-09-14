@@ -18,7 +18,7 @@
       <img src="images/logo.png" alt="Arthur Logo">
     </div>
     <div class="user" id="userProfile" style="cursor: pointer;">
-      <div class="user-avatar">
+      <div class="user-avatar" id="userAvatar">
         <span class="user-initial">U</span>
       </div>
       <span id="usernameDisplay">User</span>
@@ -27,25 +27,49 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const userStr = localStorage.getItem("user");
       const usernameDisplay = document.getElementById("usernameDisplay");
       const userInitial = document.querySelector(".user-initial");
       const userProfile = document.getElementById("userProfile");
       
-      if (user) {
-        // Display the actual username from login/register
-        const displayName = user.username || user.name || user.email || "User";
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        
+        // Display Telegram username if available, otherwise fallback to name
+        let displayName = "User";
+        if (user.telegram_username && user.telegram_username !== '') {
+          displayName = `@${user.telegram_username}`;
+        } else if (user.first_name) {
+          displayName = user.first_name;
+          if (user.last_name) {
+            displayName += ` ${user.last_name}`;
+          }
+        } else if (user.name) {
+          displayName = user.name;
+        }
+        
         usernameDisplay.textContent = displayName;
         
-        // Set user initial (first letter of username)
-        const initial = displayName.charAt(0).toUpperCase();
-        userInitial.textContent = initial;
+        // Handle user avatar - try to get Telegram photo first
+        const userAvatar = document.getElementById("userAvatar");
+        if (user.telegram_photo_url) {
+          // If Telegram photo available, use it
+          userAvatar.innerHTML = `<img src="${user.telegram_photo_url}" alt="User Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+        } else {
+          // Otherwise use initial
+          const initial = displayName.charAt(0).toUpperCase();
+          userInitial.textContent = initial;
+        }
         
         // Add logout functionality
         userProfile.addEventListener("click", () => {
           if (confirm("Are you sure you want to logout?")) {
             localStorage.removeItem("user");
             localStorage.removeItem("email");
+            localStorage.removeItem("telegramUsername");
+            localStorage.removeItem("telegramFirstName");
+            localStorage.removeItem("telegramLastName");
+            localStorage.removeItem("userName");
             window.location.href = "index.html";
           }
         });
