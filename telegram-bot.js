@@ -14,6 +14,7 @@ const SERVER_URL = process.env.SERVER_BASE_URL || 'https://arthur-game-shop.onre
 const pendingLogins = new Map();
 
 console.log('🤖 Arthur Game Shop Bot started!');
+console.log('✅ Telegram bot connected...');
 console.log('🌐 Server URL:', SERVER_URL);
 console.log('🔧 Environment:', process.env.NODE_ENV || 'development');
 
@@ -47,11 +48,21 @@ bot.onText(/\/start/, async (msg) => {
   if (startPayload) {
     // This is a deep link login request
     console.log(`🔗 Deep link login request: ${startPayload} from user ${userId}`);
+    console.log("🔁 Received login request:", startPayload);
+    console.log("👤 User details:", { userId, firstName, lastName, username, chatId });
     
     try {
       // Send login request to server
       const confirmUrl = `${SERVER_URL}/api/telegram-bot-confirm`;
       console.log('🔗 Calling API:', confirmUrl);
+      console.log('📤 Sending data:', {
+        sessionCode: startPayload,
+        telegramUserId: userId.toString(),
+        firstName: firstName,
+        lastName: lastName,
+        username: username,
+        chatId: chatId
+      });
       const response = await fetch(confirmUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,10 +76,28 @@ bot.onText(/\/start/, async (msg) => {
         })
       });
       
+      // Check if response is ok
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Server response error:', response.status, errorText);
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const errorText = await response.text();
+        console.error('❌ Non-JSON response received:', errorText.substring(0, 200));
+        throw new Error('Server returned non-JSON response');
+      }
+      
       const result = await response.json();
+      console.log('📋 Bot confirm response:', result);
+      console.log('✅ Response received successfully');
       
       if (result.success) {
         // Login confirmed
+        console.log('🎉 Login confirmation successful');
         const confirmMessage = `✅ **Login Confirmed!**\n\n` +
           `Welcome to Arthur Game Shop, ${firstName}!\n\n` +
           `**User Details:**\n` +
@@ -79,15 +108,28 @@ bot.onText(/\/start/, async (msg) => {
         
         await bot.sendMessage(chatId, confirmMessage, { parse_mode: 'Markdown' });
         console.log(`✅ Login confirmed for user ${userId} with session ${startPayload}`);
+        console.log('📤 Success message sent to user');
       } else {
         // Login failed
+        console.log('❌ Login confirmation failed:', result.error);
         await bot.sendMessage(chatId, `❌ **Login Failed**\n\n${result.error || 'Invalid session code'}`);
         console.log(`❌ Login failed for user ${userId}: ${result.error}`);
+        console.log('📤 Error message sent to user');
       }
       
     } catch (error) {
       console.error('❌ Error confirming login:', error);
-      await bot.sendMessage(chatId, '❌ Sorry, there was an error processing your login. Please try again.');
+      let errorMessage = '❌ Sorry, there was an error processing your login. Please try again.';
+      
+      if (error.message.includes('Server error: 404')) {
+        errorMessage = '❌ **Login Failed**\n\nServer endpoint not found. Please contact support.';
+      } else if (error.message.includes('Server error: 500')) {
+        errorMessage = '❌ **Login Failed**\n\nServer error. Please try again later.';
+      } else if (error.message.includes('non-JSON response')) {
+        errorMessage = '❌ **Login Failed**\n\nServer configuration error. Please contact support.';
+      }
+      
+      await bot.sendMessage(chatId, errorMessage);
     }
   } else {
     // Regular start command

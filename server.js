@@ -1209,9 +1209,12 @@ app.get("/api/telegram-auth-callback", async (req, res) => {
 app.post("/api/telegram-deep-login", async (req, res) => {
   try {
     console.log("=== TELEGRAM DEEP LOGIN START ===");
+    console.log("🔁 Received login request from:", req.ip);
+    console.log("📱 User Agent:", req.headers['user-agent'] || 'Unknown');
     
     // Generate unique session code
     const sessionCode = Math.floor(10000000 + Math.random() * 90000000).toString();
+    console.log("🔑 Generated session code:", sessionCode);
     
     // Store session data
     pendingLoginSessions.set(sessionCode, {
@@ -1219,11 +1222,11 @@ app.post("/api/telegram-deep-login", async (req, res) => {
       createdAt: new Date(),
       userAgent: req.headers['user-agent'] || 'Unknown'
     });
-    
-    console.log("📱 Generated session code:", sessionCode);
+    console.log("💾 Stored session in memory:", sessionCode);
     
     // Create deep link URL
     const deepLinkUrl = `https://t.me/arthur_gameshopbot?start=${sessionCode}`;
+    console.log("🔗 Generated deep link:", deepLinkUrl);
     
     res.json({
       success: true,
@@ -1231,6 +1234,7 @@ app.post("/api/telegram-deep-login", async (req, res) => {
       deepLinkUrl: deepLinkUrl,
       message: "Please open Telegram and start the bot with the provided code"
     });
+    console.log("✅ Deep login response sent successfully");
     
   } catch (error) {
     console.error("❌ Deep login start error:", error);
@@ -1328,31 +1332,42 @@ app.post("/api/telegram-bot-confirm", async (req, res) => {
   try {
     const { sessionCode, telegramUserId, firstName, lastName, username, chatId } = req.body;
     
-    console.log("🤖 Bot login confirmation:", { sessionCode, telegramUserId, firstName });
+    console.log("🤖 Bot login confirmation received");
+    console.log("🔁 Received login request:", sessionCode);
+    console.log("👤 User details:", { telegramUserId, firstName, lastName, username, chatId });
     
     // Find the pending session
     const sessionData = pendingLoginSessions.get(sessionCode);
+    console.log("🔍 Looking for session:", sessionCode);
+    console.log("📊 Session found:", !!sessionData);
     
     if (!sessionData) {
+      console.log("❌ Session not found:", sessionCode);
       return res.status(404).json({ error: "Invalid or expired session code" });
     }
     
     // Check if session is expired (10 minutes)
-    if (new Date() - sessionData.createdAt > 10 * 60 * 1000) {
+    const sessionAge = new Date() - sessionData.createdAt;
+    console.log("⏰ Session age (ms):", sessionAge);
+    if (sessionAge > 10 * 60 * 1000) {
+      console.log("⏰ Session expired, deleting:", sessionCode);
       pendingLoginSessions.delete(sessionCode);
       return res.status(410).json({ error: "Session code has expired" });
     }
     
     // Check if user already exists
+    console.log("🔍 Checking if user exists with telegram_id:", telegramUserId);
     const existingUser = await pool.query(
       "SELECT * FROM users WHERE telegram_id = $1", 
       [telegramUserId]
     );
+    console.log("📊 User exists:", existingUser.rows.length > 0);
     
     let user;
     
     if (existingUser.rows.length > 0) {
       // Update existing user
+      console.log("👤 Updating existing user");
       user = existingUser.rows[0];
       await pool.query(
         "UPDATE users SET first_name = $1, last_name = $2, username = $3, updated_at = NOW() WHERE telegram_id = $4",
@@ -1361,6 +1376,7 @@ app.post("/api/telegram-bot-confirm", async (req, res) => {
       console.log("✅ Updated existing user:", user.email);
     } else {
       // Create new user
+      console.log("👤 Creating new user");
       const fullName = `${firstName} ${lastName || ''}`.trim();
       const email = `telegram_${telegramUserId}@arthur-gameshop.com`;
       
@@ -2599,8 +2615,11 @@ setupTelegramWebhook();
 
 /* ----------------- START ----------------- */
 app.listen(PORT, () => {
+  console.log("✅ Server running...");
   const serverUrl = process.env.NODE_ENV === "production" 
     ? "https://arthur-game-shop.onrender.com"
     : `http://localhost:${PORT}`;
-  console.log(`Server running on ${serverUrl}`);
+  console.log(`🌐 Server running on ${serverUrl}`);
+  console.log("🔧 Environment:", process.env.NODE_ENV || 'development');
+  console.log("📊 Database:", process.env.DATABASE_URL ? 'Connected' : 'Not configured');
 });
