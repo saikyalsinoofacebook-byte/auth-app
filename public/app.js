@@ -16,6 +16,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const sessionCodeDisplay = document.getElementById("sessionCodeDisplay");
   const openTelegramLink = document.getElementById("openTelegramLink");
   
+  // Debug element selection
+  console.log("🔍 Deep link elements found:");
+  console.log("- telegramDeepLoginBtn:", telegramDeepLoginBtn ? "✅" : "❌");
+  console.log("- telegramDeepLoginStatus:", telegramDeepLoginStatus ? "✅" : "❌");
+  console.log("- sessionCodeDisplay:", sessionCodeDisplay ? "✅" : "❌");
+  console.log("- openTelegramLink:", openTelegramLink ? "✅" : "❌");
+  
   if (telegramDeepLoginBtn) {
     telegramDeepLoginBtn.addEventListener("click", async () => {
       try {
@@ -25,6 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("❌ Deep link login failed: " + error.message);
       }
     });
+    console.log("✅ Deep link button event listener added");
+  } else {
+    console.error("❌ Deep link button not found!");
   }
   
   // ---------------- Confirmation Code Verification ----------------
@@ -69,24 +79,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function startDeepLinkLogin() {
     try {
+      console.log("🔄 Starting deep link login...");
+      
       // Show loading status
-      telegramDeepLoginBtn.style.display = 'none';
-      telegramDeepLoginStatus.style.display = 'block';
+      if (telegramDeepLoginBtn) {
+        telegramDeepLoginBtn.style.display = 'none';
+        console.log("✅ Hidden deep login button");
+      }
+      
+      if (telegramDeepLoginStatus) {
+        telegramDeepLoginStatus.style.display = 'block';
+        telegramDeepLoginStatus.style.visibility = 'visible';
+        telegramDeepLoginStatus.style.opacity = '1';
+        console.log("✅ Shown deep login status");
+      }
       
       // Start deep link login process
+      console.log(`🌐 Calling API: ${backendURL}/api/telegram-deep-login`);
       const response = await fetch(`${backendURL}/api/telegram-deep-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
       
+      console.log(`📡 Response status: ${response.status}`);
       const data = await response.json();
+      console.log("📋 Response data:", data);
       
       if (data.success) {
         // Show session code
-        sessionCodeDisplay.textContent = data.sessionCode;
+        if (sessionCodeDisplay) {
+          sessionCodeDisplay.textContent = data.sessionCode;
+          console.log(`✅ Set session code: ${data.sessionCode}`);
+        }
         
         // Set up deep link
-        openTelegramLink.href = data.deepLinkUrl;
+        if (openTelegramLink) {
+          openTelegramLink.href = data.deepLinkUrl;
+          console.log(`✅ Set deep link: ${data.deepLinkUrl}`);
+        }
         
         // Start polling for login status
         pollDeepLinkStatus(data.sessionCode);

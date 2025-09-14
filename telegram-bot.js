@@ -10,12 +10,28 @@ const bot = new TelegramBot(token, { polling: true });
 // Server URL for API calls
 const SERVER_URL = process.env.NODE_ENV === 'production' 
   ? 'https://arthur-game-shop.onrender.com'
-  : 'http://localhost:3000';
+  : 'http://localhost:5000';
 
 // Store pending login requests
 const pendingLogins = new Map();
 
 console.log('🤖 Arthur Game Shop Bot started!');
+
+// Test server connection on startup
+async function testServerConnection() {
+  try {
+    console.log('🔄 Testing server connection...');
+    const response = await fetch(`${SERVER_URL}/health`);
+    const data = await response.json();
+    console.log('✅ Server connection successful:', data);
+  } catch (error) {
+    console.error('❌ Server connection failed:', error.message);
+    console.log('⚠️ Bot will continue but server calls may fail');
+  }
+}
+
+// Test server connection
+testServerConnection();
 
 // Handle /start command with payload
 bot.onText(/\/start/, async (msg) => {
@@ -221,6 +237,9 @@ bot.on('callback_query', async (callbackQuery) => {
 // Process login confirmation with server
 async function processLoginConfirmation(loginData, securityCode) {
   try {
+    console.log(`🔄 Processing login confirmation for user ${loginData.telegramUserId}`);
+    console.log(`🌐 Calling server: ${SERVER_URL}/api/telegram-login-confirm`);
+    
     // Call server API to confirm login
     const response = await fetch(`${SERVER_URL}/api/telegram-login-confirm`, {
       method: 'POST',
@@ -234,7 +253,16 @@ async function processLoginConfirmation(loginData, securityCode) {
       })
     });
     
+    console.log(`📡 Server response status: ${response.status}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ Server error ${response.status}: ${errorText}`);
+      return { success: false, error: `Server error: ${response.status}` };
+    }
+    
     const result = await response.json();
+    console.log(`📋 Server response:`, result);
     
     if (result.success) {
       // Clean up pending login
@@ -246,6 +274,11 @@ async function processLoginConfirmation(loginData, securityCode) {
     
   } catch (error) {
     console.error('❌ Error confirming login with server:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
     return { success: false, error: error.message };
   }
 }
