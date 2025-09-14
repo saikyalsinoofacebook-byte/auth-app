@@ -7,10 +7,8 @@ const token = '8256194856:AAGqJPELBjSovJtQqnfOni4CuNa6HX1Xy_I';
 // Create bot instance
 const bot = new TelegramBot(token, { polling: true });
 
-// Server URL for API calls
-const SERVER_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://arthur-game-shop.onrender.com'
-  : 'http://localhost:5000';
+// Server URL for API calls - always use Render URL for bot
+const SERVER_URL = 'https://arthur-game-shop.onrender.com';
 
 // Store pending login requests
 const pendingLogins = new Map();

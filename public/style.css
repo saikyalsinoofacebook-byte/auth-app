@@ -197,14 +197,29 @@ input {
   display: block;
   margin: 15px 0;
   font-family: 'Courier New', monospace;
-  font-weight: bold;
-  color: #0066aa;
+  font-weight: 900; /* Extra bold */
+  color: #ffd700; /* Bright yellow */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); /* Black shadow */
   background: rgba(0, 136, 204, 0.1);
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 2px solid rgba(0, 136, 204, 0.3);
-  font-size: 18px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 3px solid rgba(255, 215, 0, 0.3); /* Yellow border */
+  font-size: 22px; /* Larger for better visibility */
   text-align: center;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2); /* Subtle yellow glow */
+  animation: pulse-glow 2s ease-in-out infinite alternate; /* Subtle pulsing animation */
+}
+
+/* Pulsing glow animation for session code */
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.3);
+  }
+  100% {
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+    border-color: rgba(255, 215, 0, 0.5);
+  }
 }
 
 /* Bot Login Button Styling */

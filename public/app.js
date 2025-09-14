@@ -267,6 +267,20 @@ document.addEventListener("DOMContentLoaded", () => {
       
       try {
         const response = await fetch(`${backendURL}/api/telegram-login-status/${sessionCode}`);
+        
+        // Check if response is ok
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error("❌ Non-JSON response received:", text.substring(0, 200));
+          throw new Error("Server returned non-JSON response");
+        }
+        
         const data = await response.json();
         
         if (data.success && data.status === 'confirmed') {
