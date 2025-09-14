@@ -1381,8 +1381,8 @@ app.post("/api/telegram-bot-confirm", async (req, res) => {
       const email = `telegram_${telegramUserId}@arthur-gameshop.com`;
       
       const newUser = await pool.query(
-        "INSERT INTO users (name, email, telegram_id, first_name, last_name, username, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING *",
-        [fullName, email, telegramUserId, firstName, lastName || '', username || '']
+        "INSERT INTO users (name, email, password, telegram_id, first_name, last_name, username, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) RETURNING *",
+        [fullName, email, 'telegram_user', telegramUserId, firstName, lastName || '', username || '']
       );
       
       user = newUser.rows[0];
