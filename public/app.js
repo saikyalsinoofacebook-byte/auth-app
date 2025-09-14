@@ -10,34 +10,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const backendURL = "https://arthur-game-shop.onrender.com";
 
-  // ---------------- Telegram Bot Login ----------------
-  const telegramBotLoginBtn = document.getElementById("telegramBotLoginBtn");
-  const telegramBotLoginStatus = document.getElementById("telegramBotLoginStatus");
-  const confirmationCodeDisplay = document.getElementById("confirmationCodeDisplay");
+  // ---------------- Deep Link Telegram Login ----------------
+  const telegramDeepLoginBtn = document.getElementById("telegramDeepLoginBtn");
+  const telegramDeepLoginStatus = document.getElementById("telegramDeepLoginStatus");
+  const sessionCodeDisplay = document.getElementById("sessionCodeDisplay");
+  const openTelegramLink = document.getElementById("openTelegramLink");
   
-  if (telegramBotLoginBtn) {
-    telegramBotLoginBtn.addEventListener("click", async () => {
+  if (telegramDeepLoginBtn) {
+    telegramDeepLoginBtn.addEventListener("click", async () => {
       try {
-        // Show instructions for bot login
-        const instructions = `🤖 **Telegram Bot Login**\n\n` +
-          `To login with Telegram:\n\n` +
-          `1. Open your Telegram app\n` +
-          `2. Search for: @arthur_gameshopbot\n` +
-          `3. Start a chat with the bot\n` +
-          `4. Send: /login\n` +
-          `5. Click "Confirm Login" in the bot\n` +
-          `6. Return here and enter your Telegram User ID\n\n` +
-          `Get your User ID from @userinfobot if needed.`;
-        
-        if (confirm(instructions)) {
-          const telegramUserId = prompt("Please enter your Telegram User ID:");
-          if (telegramUserId) {
-            await startTelegramBotLogin(telegramUserId);
-          }
-        }
+        await startDeepLinkLogin();
       } catch (error) {
-        console.error("Telegram bot login error:", error);
-        alert("❌ Telegram bot login failed: " + error.message);
+        console.error("Deep link login error:", error);
+        alert("❌ Deep link login failed: " + error.message);
       }
     });
   }
@@ -82,34 +67,36 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  async function startTelegramBotLogin(telegramUserId) {
+  async function startDeepLinkLogin() {
     try {
       // Show loading status
-      telegramBotLoginBtn.style.display = 'none';
-      telegramBotLoginStatus.style.display = 'block';
+      telegramDeepLoginBtn.style.display = 'none';
+      telegramDeepLoginStatus.style.display = 'block';
       
-      // Start login process
-      const response = await fetch(`${backendURL}/api/telegram-login-start`, {
+      // Start deep link login process
+      const response = await fetch(`${backendURL}/api/telegram-deep-login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegramUserId })
+        headers: { 'Content-Type': 'application/json' }
       });
       
       const data = await response.json();
       
       if (data.success) {
-        // Show security code
-        confirmationCodeDisplay.textContent = data.securityCode;
+        // Show session code
+        sessionCodeDisplay.textContent = data.sessionCode;
+        
+        // Set up deep link
+        openTelegramLink.href = data.deepLinkUrl;
         
         // Start polling for login status
-        pollBotLoginStatus(data.securityCode);
+        pollDeepLinkStatus(data.sessionCode);
       } else {
-        throw new Error(data.error || 'Failed to start login process');
+        throw new Error(data.error || 'Failed to start deep link login');
       }
     } catch (error) {
-      console.error("Start Telegram bot login error:", error);
-      alert("❌ Failed to start Telegram bot login: " + error.message);
-      resetTelegramBotLoginUI();
+      console.error("Start deep link login error:", error);
+      alert("❌ Failed to start deep link login: " + error.message);
+      resetDeepLinkUI();
     }
   }
 
@@ -239,6 +226,70 @@ document.addEventListener("DOMContentLoaded", () => {
         <p style="font-size: 14px; color: #666;">Redirecting to your dashboard...</p>
       </div>
     `;
+  }
+
+  async function pollDeepLinkStatus(sessionCode) {
+    const maxAttempts = 120; // 10 minutes (5 seconds * 120)
+    let attempts = 0;
+    
+    const pollInterval = setInterval(async () => {
+      attempts++;
+      
+      try {
+        const response = await fetch(`${backendURL}/api/telegram-login-status/${sessionCode}`);
+        const data = await response.json();
+        
+        if (data.success && data.status === 'confirmed') {
+          // Login successful
+          clearInterval(pollInterval);
+          
+          // Store user data
+          localStorage.setItem("user", data.user.name);
+          localStorage.setItem("email", data.user.email);
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("telegramId", data.user.telegram_id);
+          
+          // Show success message
+          showDeepLinkSuccess(data.user);
+          
+          // Redirect after 2 seconds
+          setTimeout(() => {
+            window.location.href = "home.html";
+          }, 2000);
+          
+        } else if (attempts >= maxAttempts) {
+          // Timeout
+          clearInterval(pollInterval);
+          alert("⏰ Login request expired. Please try again.");
+          resetDeepLinkUI();
+        }
+        
+      } catch (error) {
+        console.error("Poll deep link status error:", error);
+        if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          alert("❌ Login check failed. Please try again.");
+          resetDeepLinkUI();
+        }
+      }
+    }, 5000); // Poll every 5 seconds
+  }
+
+  function showDeepLinkSuccess(user) {
+    telegramDeepLoginStatus.innerHTML = `
+      <div class="status-message" style="color: #28a745;">
+        <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+        <p style="font-weight: bold; margin: 10px 0;">Login Successful!</p>
+        <p>Welcome, ${user.name}!</p>
+        <p style="font-size: 14px; color: #666;">Redirecting to your dashboard...</p>
+      </div>
+    `;
+  }
+
+  function resetDeepLinkUI() {
+    telegramDeepLoginBtn.style.display = 'flex';
+    telegramDeepLoginStatus.style.display = 'none';
+    sessionCodeDisplay.textContent = '';
   }
 
   function resetTelegramBotLoginUI() {

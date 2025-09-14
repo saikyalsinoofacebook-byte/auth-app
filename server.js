@@ -996,6 +996,9 @@ function checkTelegramAuth(data, botToken) {
 // Store pending confirmation codes
 const pendingConfirmations = new Map();
 
+// Store pending login sessions for deep link
+const pendingLoginSessions = new Map();
+
 // Telegram authentication callback with verification
 app.get("/api/telegram-auth-callback", async (req, res) => {
   console.log("=== TELEGRAM AUTH CALLBACK ===");
@@ -1202,6 +1205,39 @@ app.get("/api/telegram-auth-callback", async (req, res) => {
   }
 });
 
+// Start deep link login process
+app.post("/api/telegram-deep-login", async (req, res) => {
+  try {
+    console.log("=== TELEGRAM DEEP LOGIN START ===");
+    
+    // Generate unique session code
+    const sessionCode = Math.floor(10000000 + Math.random() * 90000000).toString();
+    
+    // Store session data
+    pendingLoginSessions.set(sessionCode, {
+      status: 'pending',
+      createdAt: new Date(),
+      userAgent: req.headers['user-agent'] || 'Unknown'
+    });
+    
+    console.log("📱 Generated session code:", sessionCode);
+    
+    // Create deep link URL
+    const deepLinkUrl = `https://t.me/arthur_gameshopbot?start=${sessionCode}`;
+    
+    res.json({
+      success: true,
+      sessionCode: sessionCode,
+      deepLinkUrl: deepLinkUrl,
+      message: "Please open Telegram and start the bot with the provided code"
+    });
+    
+  } catch (error) {
+    console.error("❌ Deep login start error:", error);
+    res.status(500).json({ error: "Failed to start deep login process" });
+  }
+});
+
 // Verify confirmation code
 app.post("/api/telegram-verify-code", async (req, res) => {
   try {
@@ -1284,6 +1320,134 @@ app.post("/api/telegram-verify-code", async (req, res) => {
   } catch (error) {
     console.error("❌ Verify confirmation code error:", error);
     res.status(500).json({ error: "Failed to verify confirmation code" });
+  }
+});
+
+// Bot confirms login with session code
+app.post("/api/telegram-bot-confirm", async (req, res) => {
+  try {
+    const { sessionCode, telegramUserId, firstName, lastName, username, chatId } = req.body;
+    
+    console.log("🤖 Bot login confirmation:", { sessionCode, telegramUserId, firstName });
+    
+    // Find the pending session
+    const sessionData = pendingLoginSessions.get(sessionCode);
+    
+    if (!sessionData) {
+      return res.status(404).json({ error: "Invalid or expired session code" });
+    }
+    
+    // Check if session is expired (10 minutes)
+    if (new Date() - sessionData.createdAt > 10 * 60 * 1000) {
+      pendingLoginSessions.delete(sessionCode);
+      return res.status(410).json({ error: "Session code has expired" });
+    }
+    
+    // Check if user already exists
+    const existingUser = await pool.query(
+      "SELECT * FROM users WHERE telegram_id = $1", 
+      [telegramUserId]
+    );
+    
+    let user;
+    
+    if (existingUser.rows.length > 0) {
+      // Update existing user
+      user = existingUser.rows[0];
+      await pool.query(
+        "UPDATE users SET first_name = $1, last_name = $2, username = $3, updated_at = NOW() WHERE telegram_id = $4",
+        [firstName, lastName || '', username || '', telegramUserId]
+      );
+      console.log("✅ Updated existing user:", user.email);
+    } else {
+      // Create new user
+      const fullName = `${firstName} ${lastName || ''}`.trim();
+      const email = `telegram_${telegramUserId}@arthur-gameshop.com`;
+      
+      const newUser = await pool.query(
+        "INSERT INTO users (name, email, telegram_id, first_name, last_name, username, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING *",
+        [fullName, email, telegramUserId, firstName, lastName || '', username || '']
+      );
+      
+      user = newUser.rows[0];
+      
+      // Create wallet for new user
+      await pool.query(
+        "INSERT INTO wallets (user_id, user_name, user_email, balance, tokens, created_at) VALUES ($1, $2, $3, 0, 0, NOW())",
+        [user.id, user.name, user.email]
+      );
+      
+      console.log("✅ Created new user:", user.email);
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        name: user.name,
+        telegramId: user.telegram_id 
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    // Update session with user data
+    sessionData.status = 'confirmed';
+    sessionData.user = user;
+    sessionData.token = token;
+    sessionData.confirmedAt = new Date();
+    
+    res.json({
+      success: true,
+      user: user,
+      token: token,
+      message: "Login confirmed successfully"
+    });
+    
+  } catch (error) {
+    console.error("❌ Bot confirm error:", error);
+    res.status(500).json({ error: "Failed to confirm login" });
+  }
+});
+
+// Check login status for frontend polling
+app.get("/api/telegram-login-status/:sessionCode", async (req, res) => {
+  try {
+    const { sessionCode } = req.params;
+    const sessionData = pendingLoginSessions.get(sessionCode);
+    
+    if (!sessionData) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+    
+    // Check if session is expired
+    if (new Date() - sessionData.createdAt > 10 * 60 * 1000) {
+      pendingLoginSessions.delete(sessionCode);
+      return res.status(410).json({ error: "Session expired" });
+    }
+    
+    if (sessionData.status === 'confirmed') {
+      // Clean up session
+      pendingLoginSessions.delete(sessionCode);
+      
+      res.json({
+        success: true,
+        status: 'confirmed',
+        user: sessionData.user,
+        token: sessionData.token
+      });
+    } else {
+      res.json({
+        success: true,
+        status: 'pending',
+        message: 'Waiting for confirmation...'
+      });
+    }
+    
+  } catch (error) {
+    console.error("❌ Check login status error:", error);
+    res.status(500).json({ error: "Failed to check login status" });
   }
 });
 

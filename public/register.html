@@ -23,17 +23,22 @@
         </script>
       </div>
       
-      <!-- Alternative Bot Login -->
-      <div class="telegram-bot-login-container" style="margin-top: 15px;">
-        <button id="telegramBotLoginBtn" class="telegram-bot-login-btn">
-          <i class="bi bi-robot"></i>
-          Login via Bot (Alternative)
+      <!-- Deep Link Telegram Login -->
+      <div class="telegram-deep-login-container" style="margin-top: 15px;">
+        <button id="telegramDeepLoginBtn" class="telegram-deep-login-btn">
+          <i class="bi bi-telegram"></i>
+          Open in Telegram
         </button>
-        <div id="telegramBotLoginStatus" class="telegram-login-status" style="display: none;">
+        <div id="telegramDeepLoginStatus" class="telegram-login-status" style="display: none;">
           <div class="status-message">
             <div class="spinner"></div>
-            <p>Please check your Telegram for confirmation code...</p>
-            <small class="security-code">Confirmation Code: <span id="confirmationCodeDisplay"></span></small>
+            <p>Please open Telegram and start the bot...</p>
+            <small class="security-code">Session Code: <span id="sessionCodeDisplay"></span></small>
+            <div style="margin-top: 15px;">
+              <a id="openTelegramLink" href="#" target="_blank" class="btn btn-primary btn-sm">
+                <i class="bi bi-telegram"></i> Open in Telegram
+              </a>
+            </div>
           </div>
         </div>
       </div>

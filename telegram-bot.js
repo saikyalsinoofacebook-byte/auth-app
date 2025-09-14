@@ -17,21 +17,73 @@ const pendingLogins = new Map();
 
 console.log('🤖 Arthur Game Shop Bot started!');
 
-// Handle /start command
-bot.onText(/\/start/, (msg) => {
+// Handle /start command with payload
+bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
+  const userId = msg.from.id;
   const firstName = msg.from.first_name;
+  const lastName = msg.from.last_name || '';
+  const username = msg.from.username || '';
   
-  const welcomeMessage = `👋 Hello ${firstName}!\n\n` +
-    `Welcome to **Arthur Game Shop Bot**! 🎮\n\n` +
-    `I can help you with:\n` +
-    `• 🔐 Quick login to Arthur Game Shop\n` +
-    `• 📊 Check your account balance\n` +
-    `• 🎁 View available gifts\n` +
-    `• 💰 Manage your wallet\n\n` +
-    `Use /login to start a quick login session!`;
+  // Check if there's a start payload (deep link)
+  const startPayload = msg.text.split(' ')[1];
   
-  bot.sendMessage(chatId, welcomeMessage, { parse_mode: 'Markdown' });
+  if (startPayload) {
+    // This is a deep link login request
+    console.log(`🔗 Deep link login request: ${startPayload} from user ${userId}`);
+    
+    try {
+      // Send login request to server
+      const response = await fetch(`${SERVER_URL}/api/telegram-bot-confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionCode: startPayload,
+          telegramUserId: userId.toString(),
+          firstName: firstName,
+          lastName: lastName,
+          username: username,
+          chatId: chatId
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Login confirmed
+        const confirmMessage = `✅ **Login Confirmed!**\n\n` +
+          `Welcome to Arthur Game Shop, ${firstName}!\n\n` +
+          `**User Details:**\n` +
+          `• User ID: ${userId}\n` +
+          `• Username: @${username || 'N/A'}\n` +
+          `• Time: ${new Date().toLocaleString()}\n\n` +
+          `You can now return to the website and complete your login.`;
+        
+        await bot.sendMessage(chatId, confirmMessage, { parse_mode: 'Markdown' });
+        console.log(`✅ Login confirmed for user ${userId} with session ${startPayload}`);
+      } else {
+        // Login failed
+        await bot.sendMessage(chatId, `❌ **Login Failed**\n\n${result.error || 'Invalid session code'}`);
+        console.log(`❌ Login failed for user ${userId}: ${result.error}`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error confirming login:', error);
+      await bot.sendMessage(chatId, '❌ Sorry, there was an error processing your login. Please try again.');
+    }
+  } else {
+    // Regular start command
+    const welcomeMessage = `👋 Hello ${firstName}!\n\n` +
+      `Welcome to **Arthur Game Shop Bot**! 🎮\n\n` +
+      `I can help you with:\n` +
+      `• 🔐 Quick login to Arthur Game Shop\n` +
+      `• 📊 Check your account balance\n` +
+      `• 🎁 View available gifts\n` +
+      `• 💰 Manage your wallet\n\n` +
+      `Use /login to start a quick login session!`;
+    
+    bot.sendMessage(chatId, welcomeMessage, { parse_mode: 'Markdown' });
+  }
 });
 
 // Handle /login command
