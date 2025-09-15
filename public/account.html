@@ -21,8 +21,13 @@
 <h2 id="username">User Name</h2>
 <p id="useremail">user@email.com</p>
       <p class="balance-label">Available Balance</p>
-      <h3 id="balance">0.00 ကျပ်</h3>
-      <button class="topup-btn" onclick="goToDeposit()">Top Up</button>
+      <h3 id="balance">Loading...</h3>
+      <div class="balance-actions">
+        <button class="refresh-btn" onclick="refreshBalance()" id="refreshBtn">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <button class="topup-btn" onclick="goToDeposit()">Top Up</button>
+      </div>
     </div>
 
     <div class="menu-list">

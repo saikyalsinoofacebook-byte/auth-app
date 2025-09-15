@@ -72,6 +72,53 @@ body {
 #balance {
   font-size: 22px;
   margin: 5px 0;
+  color: #00bfff;
+  font-weight: bold;
+}
+
+.balance-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.refresh-btn {
+  background: #1a1d3a;
+  border: 2px solid #00bfff;
+  color: #00bfff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+}
+
+.refresh-btn:hover {
+  background: #00bfff;
+  color: #0a0d2e;
+  transform: scale(1.05);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.refresh-btn .spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .topup-btn {

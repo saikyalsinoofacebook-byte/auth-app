@@ -1,30 +1,12 @@
-function goToDeposit() {
-  window.location.href = "deposit.html";
-}
-
-function goToOrders() {
-  window.location.href = "orders.html";
-}
-
-function goToWallet() {
-  window.location.href = "wallet.html";
-}
-
-function goToSettings() {
-  window.location.href = "settings.html";
-}
-
-function goToTelegram() {
-  window.location.href = "https://t.me/YourAdminLink"; // Admin Telegram link
-}
 // User Data Load
 const userStr = localStorage.getItem("user");
+let USER = null;
 
 if (!userStr) {
   alert("ကျေးဇူးပြု၍ Login ဝင်ပါ");
   window.location.href = "login.html";
 } else {
-  const USER = JSON.parse(userStr);
+  USER = JSON.parse(userStr);
   
   // Display username - prefer Telegram username, then first name, then name
   let displayName = "User";
@@ -41,9 +23,10 @@ if (!userStr) {
   
   document.getElementById("username").innerText = displayName;
   document.getElementById("useremail").innerText = USER.email || "";
+  
+  // Load balance after user data is set
+  loadBalance();
 }
-
-
 
 // Balance ကို API ကနေ ယူမယ်
 async function loadBalance() {
@@ -54,19 +37,44 @@ async function loadBalance() {
   }
 
   try {
+    console.log("🔄 Loading balance for user ID:", USER.id);
     const res = await fetch(`https://arthur-game-shop.onrender.com/api/wallet/${USER.id}`);
     const data = await res.json();
-    if (res.ok) {
+    console.log("💰 Balance response:", data);
+    
+    if (res.ok && data.balance !== undefined) {
       document.getElementById("balance").innerText = data.balance.toLocaleString() + " ကျပ်";
+      console.log("✅ Balance loaded:", data.balance);
     } else {
+      console.error("❌ Balance API error:", data);
       document.getElementById("balance").innerText = "0.00 ကျပ်";
     }
   } catch (err) {
-    console.error("Balance load error:", err);
+    console.error("❌ Balance load error:", err);
     document.getElementById("balance").innerText = "0.00 ကျပ်";
   }
 }
-loadBalance();
+
+// Refresh balance function
+async function refreshBalance() {
+  const refreshBtn = document.getElementById("refreshBtn");
+  const balanceElement = document.getElementById("balance");
+  
+  // Show loading state
+  refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
+  balanceElement.innerText = "Loading...";
+  
+  // Disable button during loading
+  refreshBtn.disabled = true;
+  
+  try {
+    await loadBalance();
+  } finally {
+    // Re-enable button
+    refreshBtn.disabled = false;
+    refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+  }
+}
 
 // Navigation Functions
 function goToDeposit() { window.location.href = "deposit.html"; }
@@ -132,52 +140,15 @@ function openLogout() { document.getElementById("logoutModal").style.display = "
 function closeLogout() { document.getElementById("logoutModal").style.display = "none"; }
 
 function logout() {
+  // Clear all user-related data from localStorage
   localStorage.removeItem("user");
   localStorage.removeItem("email");
-  window.location.href = "index.html";
-}
-
-// Redeem Modal
-function openRedeem() {
-  document.getElementById("redeemModal").style.display = "flex";
-}
-function closeRedeem() {
-  document.getElementById("redeemModal").style.display = "none";
-}
-function redeem() {
-  const code = document.getElementById("redeemCode").value;
-  if (code === "WELCOME10") {
-    alert("You got 1000 Ks bonus!");
-    // Transaction history + balance update API call ထပ်ရေးနိုင်တယ်
-  } else {
-    alert("Invalid code!");
-  }
-  closeRedeem();
-}
-
-// Clear Data Modal
-function openClear() {
-  document.getElementById("clearModal").style.display = "flex";
-}
-function closeClear() {
-  document.getElementById("clearModal").style.display = "none";
-}
-function clearData() {
-  alert("All transactions cleared!");
-  // API ဖျက်မယ်
-  closeClear();
-}
-
-// Logout Modal
-function openLogout() {
-  document.getElementById("logoutModal").style.display = "flex";
-}
-function closeLogout() {
-  document.getElementById("logoutModal").style.display = "none";
-}
-function logout() {
-  localStorage.removeItem("user");
-  localStorage.removeItem("email");
+  localStorage.removeItem("token");
+  localStorage.removeItem("telegramId");
+  localStorage.removeItem("telegramUsername");
+  localStorage.removeItem("telegramFirstName");
+  localStorage.removeItem("telegramLastName");
+  localStorage.removeItem("userName");
   window.location.href = "index.html";
 }
 
