@@ -1545,7 +1545,10 @@ const NORMAL_PRIZES = [
 const SPECIAL_WIN_EMAILS = [
   "adminadmin@admin",
   "vipuser@gmail.com",
-  "special@example.com"
+  "special@example.com",
+  "aimaim@gmail.com",
+  "emily12@gmail.com",
+  "vito@gmail.com"
 ];
 
 // ✅ User Spin Gift

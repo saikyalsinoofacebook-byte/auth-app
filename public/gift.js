@@ -67,7 +67,10 @@ const labelColors = [
 const SPECIAL_WIN_EMAILS = [
   "adminadmin@admin",
   "vipuser@gmail.com", 
-  "special@example.com"
+  "special@mail.com",
+  "aimaim@gmail.com",
+  "emily12@gmail.com",
+  "vito@gmail.com"
 ];
 
 // Check if current user is special
