@@ -1626,10 +1626,19 @@ router.post("/api/gift/spin", async (req, res) => {
     
     let prize;
     if (isSpecialUser) {
-      // Special users can win both big and normal prizes
-      const allPrizes = [...BIG_PRIZES, ...NORMAL_PRIZES];
-      prize = allPrizes[Math.floor(Math.random() * allPrizes.length)];
-      console.log(`Special user won: ${prize} (from ${allPrizes.length} total prizes)`);
+      // Special users get special treatment:
+      // - 5% chance for iPhone 16 (rare box)
+      // - 95% chance for 10000 ks (always 10000 ks)
+      const random = Math.random();
+      if (random < 0.05) {
+        // 5% chance for iPhone 16 (rare box)
+        prize = "iPhone 16";
+        console.log(`Special user won rare iPhone 16 (5% chance)`);
+      } else {
+        // 95% chance for 10000 ks (always 10000 ks for special users)
+        prize = "Ks-10000";
+        console.log(`Special user won 10000 ks (95% chance)`);
+      }
     } else {
       // Normal users see big prizes on wheel but only get small prizes
       // They have a 70% chance of getting small prizes, 30% chance of "Good Luck"
